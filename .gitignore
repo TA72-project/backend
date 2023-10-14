@@ -1,0 +1,4 @@
+/target
+/*.sql
+.idea
+.vscode

@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  api:
+    image: ghcr.io/ta72-project/rust_actix_diesel
+    ports:
+      - "8000:8000"
+    working_dir: "/app"
+    volumes:
+      - ".:/app"
+    command: cargo run
+    environment:
+      DATABASE_URL: postgres://root:root@database/root
+
+  database:
+    image: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root

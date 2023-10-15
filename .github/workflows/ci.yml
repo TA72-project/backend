@@ -20,13 +20,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: cargo fmt --check --verbose --locked
+      - run: cargo fmt --check --verbose
 
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: cargo clippy --verbose --no-deps --locked
+      - run: cargo clippy --verbose --no-deps
 
   test:
     runs-on: ubuntu-latest
@@ -38,4 +38,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: cargo doc --verbose --locked
+      - run: cargo doc --verbose

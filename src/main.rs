@@ -6,6 +6,7 @@ use actix_web::{
 mod database;
 mod error;
 mod models;
+mod pagination;
 mod routes;
 mod schema;
 

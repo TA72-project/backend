@@ -10,11 +10,27 @@
 
 ## Docker
 
+Docker is the easiest way to develop, it doesn't require any dependence.  
+You can start the project using the following command. It may take some time the first time.
+
 ```sh
 docker-compose up -d
 ```
 
+To apply the source code modifications, you can restart the API container with the following command.
+
+```sh
+docker restart backend-api-1
+```
+
 ## Local machine
+
+Install Rust [here](https://www.rust-lang.org/tools/install).
+
+You'll then need to setup a Postgres database yourself. Add the environment variable
+`DATABASE_URL=<postgres://<user>:<password>@<host>/<database>`.
+
+Finally, run `cargo run` to start the server.
 
 # Contributing
 

@@ -4,6 +4,7 @@ use actix_web::{
 };
 
 mod database;
+mod error;
 mod models;
 mod routes;
 mod schema;
@@ -27,8 +28,8 @@ async fn main() -> std::io::Result<()> {
             .wrap(NormalizePath::trim())
             .service(
                 web::scope("/api")
-                    .service(version::routes())
-                    .service(skills::routes()),
+                    .service(skills::routes())
+                    .service(version::routes()),
             )
     })
     .bind(("0.0.0.0", 8000))?

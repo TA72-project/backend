@@ -8,9 +8,10 @@ services:
     working_dir: "/app"
     volumes:
       - ".:/app"
-    command: cargo run
+    command: cargo watch -x run
     environment:
       DATABASE_URL: postgres://root:root@database/root
+      CARGO_TARGET_DIR: /tmp/target
 
   database:
     image: postgres

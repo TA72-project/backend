@@ -17,11 +17,7 @@ You can start the project using the following command. It may take some time the
 docker-compose up -d
 ```
 
-To apply the source code modifications, you can restart the API container with the following command.
-
-```sh
-docker restart backend-api-1
-```
+The application is recompiled automatically on each file modification.
 
 ## Local machine
 

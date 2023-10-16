@@ -1,6 +1,6 @@
 use diesel::{AsChangeset, Insertable, Queryable};
 use serde::{Deserialize, Serialize};
-use utoipa::{ToSchema, IntoParams};
+use utoipa::{IntoParams, ToSchema};
 
 use crate::schema::skills;
 

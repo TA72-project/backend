@@ -1,7 +1,7 @@
 //! Contains everything related to pagination, the query parameters and the response.
 
 use serde::{Deserialize, Serialize};
-use utoipa::{ToSchema, IntoParams};
+use utoipa::{IntoParams, ToSchema};
 
 use crate::models::*;
 

@@ -37,7 +37,8 @@ pub fn routes() -> Scope {
     ),
     params(
         PaginationParam
-    )
+    ),
+    tag = "skills"
 )]
 #[get("")]
 async fn all(
@@ -73,7 +74,8 @@ async fn all(
     ),
     params(
         ("id" = i64, Path, description = "Skill id")
-    )
+    ),
+    tag = "skills"
 )]
 #[get("/{id}")]
 async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Responder> {
@@ -89,7 +91,8 @@ async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Respond
     responses(
         (status = 200, body = Skill),
         (status = 400)
-    )
+    ),
+    tag = "skills"
 )]
 #[post("")]
 async fn post(new_skill: web::Json<NewSkill>, pool: web::Data<DbPool>) -> Result<impl Responder> {
@@ -112,7 +115,8 @@ async fn post(new_skill: web::Json<NewSkill>, pool: web::Data<DbPool>) -> Result
     ),
     params(
         ("id" = i64, Path, description = "Id of the skill to update")
-    )
+    ),
+    tag = "skills"
 )]
 #[put("/{id}")]
 async fn put(
@@ -140,7 +144,8 @@ async fn put(
     ),
     params(
         ("id" = i64, Path, description = "Id of the skill to delete")
-    )
+    ),
+    tag = "skills"
 )]
 #[delete("/{id}")]
 async fn delete(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Responder> {

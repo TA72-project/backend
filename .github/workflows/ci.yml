@@ -67,7 +67,7 @@ jobs:
           cargo install diesel_cli --no-default-features --features postgres
 
       - name: Generate schema
-        run: diesel setup --database-url postgres://postgres@127.0.0.1/diesel_schema
+        run: diesel setup --database-url postgres://postgres:postgres@127.0.0.1/diesel_schema
 
         # Checks for changed files
       - run: test ! "$(git status --porcelain)"

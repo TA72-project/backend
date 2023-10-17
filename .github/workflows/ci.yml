@@ -43,7 +43,7 @@ jobs:
   diesel:
     name: Diesel schema
     runs-on: ubuntu-latest
-    container: rust_actix_diesel
+    container: ghcr.io/ta72-project/rust_actix_diesel
     steps:
       - uses: actions/checkout@v3
 

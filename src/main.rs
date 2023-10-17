@@ -29,7 +29,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(pool.clone()))
             .wrap(Logger::new("\"%r\" -> %s in %D ms"))
             .wrap(NormalizePath::trim())
-            .service(Redoc::with_url("/redoc", documentation::doc()))
+            .service(Redoc::with_url("/doc", documentation::doc()))
             .service(
                 web::scope("/api")
                     .service(skills::routes())

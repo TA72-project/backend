@@ -8,7 +8,7 @@
 
 # Documentation
 
-The documentation is accessible at the [`/redoc`](localhost:8000/redoc) route when running the API.  
+The documentation is accessible at the [`/doc`](localhost:8000/doc) route when running the API.  
 You can get the `openapi.json` file from this page.
 
 # Running

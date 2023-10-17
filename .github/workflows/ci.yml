@@ -39,3 +39,37 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: cargo doc --verbose --no-deps
+
+  diesel:
+    name: Diesel schema
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup postgresql
+        run: |
+          sudo systemctl start postgresql.service
+          sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'postgres'"
+
+      # Cache .cargo to avoid installing diesel-cli
+      - name: Diesel cli cache
+        id: cache-diesel-cli
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-diesel-cli
+        with:
+          path: ~/.cargo
+          key: cargo-diesel
+
+      # Install diesel cli if cache misses
+      - name: Diesel cli install
+        if: ${{ steps.cache-diesel-cli.outputs.cache-hit != 'true' }}
+        run: |
+          sudo apt-get install -y libpq-dev
+          cargo install diesel_cli --no-default-features --features postgres
+
+      - name: Generate schema
+        run: diesel setup --database-url postgres://postgres:postgres@127.0.0.1/diesel_schema
+
+        # Checks for changed files
+      - run: test ! "$(git status --porcelain)"

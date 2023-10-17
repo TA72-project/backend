@@ -42,7 +42,6 @@ impl PaginationParam {
 ///
 /// Contains paging metadata and the inner data. `page` and `per_page` can be set from
 /// [PaginationParam]. `total` and `total_page` can be set using [Self::total].
-///
 #[derive(Serialize)]
 pub struct PaginatedResponse<T: Serialize> {
     data: T,

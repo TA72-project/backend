@@ -20,6 +20,8 @@ env_logger = "0.10.0"
 r2d2 = "0.8.10"
 # Serialization, deserialization. JSON transformations
 serde = "1.0.189"
+utoipa = { version = "4.0.0", features = ["actix_extras"] }
+utoipa-redoc = { version = "1.0.0", features = ["actix-web"] }
 
 
 [profile.release]

@@ -2,8 +2,10 @@ use actix_web::{
     middleware::{Logger, NormalizePath},
     web, App, HttpServer,
 };
+use utoipa_redoc::{Redoc, Servable};
 
 mod database;
+mod documentation;
 mod error;
 mod models;
 mod pagination;
@@ -27,6 +29,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(pool.clone()))
             .wrap(Logger::new("\"%r\" -> %s in %D ms"))
             .wrap(NormalizePath::trim())
+            .service(Redoc::with_url("/doc", documentation::doc()))
             .service(
                 web::scope("/api")
                     .service(skills::routes())

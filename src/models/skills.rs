@@ -1,22 +1,23 @@
 use diesel::{AsChangeset, Insertable, Queryable};
 use serde::{Deserialize, Serialize};
+use utoipa::{IntoParams, ToSchema};
 
 use crate::schema::skills;
 
-#[derive(Debug, Clone, Serialize, Deserialize, Queryable)]
+#[derive(Serialize, Queryable, ToSchema)]
 #[diesel(table_name = skills)]
 pub struct Skill {
     id: i64,
     name: String,
 }
 
-#[derive(Debug, Clone, Deserialize, AsChangeset)]
+#[derive(Deserialize, AsChangeset, ToSchema)]
 #[diesel(table_name = skills)]
 pub struct UpdateSkill {
     name: String,
 }
 
-#[derive(Debug, Clone, Deserialize, Insertable)]
+#[derive(Deserialize, Insertable, ToSchema, IntoParams)]
 #[diesel(table_name = skills)]
 pub struct NewSkill {
     name: String,

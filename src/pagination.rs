@@ -1,9 +1,12 @@
 //! Contains everything related to pagination, the query parameters and the response.
 
 use serde::{Deserialize, Serialize};
+use utoipa::{IntoParams, ToSchema};
+
+use crate::models::*;
 
 /// Defines the query parameters that can be received for pagination.
-#[derive(Clone, Deserialize)]
+#[derive(Clone, Deserialize, IntoParams)]
 #[serde(default)]
 pub struct PaginationParam {
     /// Page number to get
@@ -42,18 +45,24 @@ impl PaginationParam {
 ///
 /// Contains paging metadata and the inner data. `page` and `per_page` can be set from
 /// [PaginationParam]. `total` and `total_page` can be set using [Self::total].
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
+#[aliases(PaginatedSkills = PaginatedResponse<Skill>)]
 pub struct PaginatedResponse<T: Serialize> {
-    data: T,
+    /// Paginated data
+    data: Vec<T>,
+    /// Current page
     page: u32,
+    /// Number of records per page
     per_page: u8,
+    /// Total number of records
     total: Option<u32>,
+    /// Total number of pages
     total_page: Option<u32>,
 }
 
 impl<T: Serialize> PaginatedResponse<T> {
     /// Creates a new paginated response from inner data and query parameters.
-    pub fn new(data: T, params: &PaginationParam) -> Self {
+    pub fn new(data: Vec<T>, params: &PaginationParam) -> Self {
         Self {
             data,
             page: params.page,
@@ -80,7 +89,7 @@ mod tests {
     #[test]
     fn pagination_total() {
         let pag = PaginatedResponse::new(
-            "",
+            vec![""],
             &PaginationParam {
                 page: 1,
                 per_page: 15,
@@ -94,7 +103,7 @@ mod tests {
     #[test]
     fn pagination_total_round() {
         let pag = PaginatedResponse::new(
-            "",
+            vec![""],
             &PaginationParam {
                 page: 1,
                 per_page: 15,

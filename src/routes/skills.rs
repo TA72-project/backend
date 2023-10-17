@@ -13,6 +13,13 @@ use crate::{
     schema::skills,
 };
 
+#[derive(utoipa::OpenApi)]
+#[openapi(
+    paths(all, get, post, put, delete),
+    components(schemas(Skill, UpdateSkill, NewSkill, crate::pagination::PaginatedSkills))
+)]
+pub struct SkillDoc;
+
 pub fn routes() -> Scope {
     web::scope("/skills")
         .service(all)
@@ -22,6 +29,17 @@ pub fn routes() -> Scope {
         .service(delete)
 }
 
+#[utoipa::path(
+    get,
+    path = "/skills",
+    responses(
+        (status = 200, description = "Paginated list of skills", body = PaginatedSkills),
+    ),
+    params(
+        PaginationParam
+    ),
+    tag = "skills"
+)]
 #[get("")]
 async fn all(
     query: web::Query<PaginationParam>,
@@ -47,6 +65,18 @@ async fn all(
     ))
 }
 
+#[utoipa::path(
+    get,
+    path = "/skills/{id}",
+    responses(
+        (status = 200, body = Skill),
+        (status = NOT_FOUND)
+    ),
+    params(
+        ("id" = i64, Path, description = "Skill id")
+    ),
+    tag = "skills"
+)]
 #[get("/{id}")]
 async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Responder> {
     let skill: Skill =
@@ -55,6 +85,15 @@ async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Respond
     Ok(Json(skill))
 }
 
+#[utoipa::path(
+    post,
+    path = "/skills",
+    responses(
+        (status = 200, body = Skill),
+        (status = 400)
+    ),
+    tag = "skills"
+)]
 #[post("")]
 async fn post(new_skill: web::Json<NewSkill>, pool: web::Data<DbPool>) -> Result<impl Responder> {
     let skill: Skill = web::block(move || {
@@ -67,6 +106,18 @@ async fn post(new_skill: web::Json<NewSkill>, pool: web::Data<DbPool>) -> Result
     Ok(Json(skill))
 }
 
+#[utoipa::path(
+    put,
+    path = "/skills/{id}",
+    responses(
+        (status = 200, body = Skill),
+        (status = 400)
+    ),
+    params(
+        ("id" = i64, Path, description = "Id of the skill to update")
+    ),
+    tag = "skills"
+)]
 #[put("/{id}")]
 async fn put(
     id: web::Path<i64>,
@@ -84,6 +135,18 @@ async fn put(
     Ok(Json(skill))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/skills/{id}",
+    responses(
+        (status = 200, body = Skill, description = "The deleted skill"),
+        (status = 400)
+    ),
+    params(
+        ("id" = i64, Path, description = "Id of the skill to delete")
+    ),
+    tag = "skills"
+)]
 #[delete("/{id}")]
 async fn delete(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Responder> {
     let skill: Skill = web::block(move || {

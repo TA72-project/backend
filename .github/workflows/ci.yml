@@ -43,14 +43,28 @@ jobs:
   diesel:
     name: Diesel schema
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/ta72-project/rust_actix_diesel
-      options: --user 0
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup postgresql
         run: sudo systemctl start postgresql.service
+
+      # Cache .cargo to avoid installing diesel-cli
+      - name: Diesel cli cache
+        id: cache-diesel-cli
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-diesel-cli
+        with:
+          path: ~/.cargo
+          key: cargo-diesel
+
+      # Install diesel cli if cache misses
+      - name: Diesel cli install
+        if: ${{ steps.cache-diesel-cli.outputs.cache-hit != 'true' }}
+        run: |
+          sudo apt-get install -y libpq-dev
+          cargo install diesel_cli --no-default-features --features postgres
 
       - name: Generate schema
         run: diesel setup --database-url postgres://postgres@127.0.0.1/diesel_schema

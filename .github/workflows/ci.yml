@@ -39,3 +39,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: cargo doc --verbose --no-deps
+
+  diesel:
+    name: Diesel schema
+    runs-on: ubuntu-latest
+    container: rust_actix_diesel
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup postgresql
+        run: sudo systemctl start postgresql.service
+
+      - name: Generate schema
+        run: diesel setup --database-url postgres://postgres@127.0.0.1/diesel_schema
+
+        # Checks for changed files
+      - run: test ! "$(git status --porcelain)"

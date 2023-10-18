@@ -46,7 +46,10 @@ impl PaginationParam {
 /// Contains paging metadata and the inner data. `page` and `per_page` can be set from
 /// [PaginationParam]. `total` and `total_page` can be set using [Self::total].
 #[derive(Serialize, ToSchema)]
-#[aliases(PaginatedSkills = PaginatedResponse<Skill>)]
+#[aliases(
+    PaginatedSkills = PaginatedResponse<Skill>,
+    PaginatedCenters = PaginatedResponse<CenterWithAddress>
+)]
 pub struct PaginatedResponse<T: Serialize> {
     /// Paginated data
     data: Vec<T>,

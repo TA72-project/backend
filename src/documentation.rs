@@ -12,6 +12,7 @@ pub fn doc() -> utoipa::openapi::OpenApi {
     let mut doc = ApiDoc::openapi();
 
     doc.merge(skills::SkillDoc::openapi());
+    doc.merge(centers::CenterDoc::openapi());
 
     doc
 }

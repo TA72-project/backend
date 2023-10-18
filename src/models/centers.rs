@@ -3,9 +3,8 @@ use diesel::{Associations, Queryable};
 use serde::Serialize;
 use utoipa::ToSchema;
 
-use crate::schema::centers;
-
 use super::Address;
+use crate::schema::centers;
 
 #[derive(Clone, Serialize, Queryable, Associations, ToSchema)]
 #[diesel(table_name = centers)]
@@ -29,4 +28,3 @@ pub struct CenterWithAddress {
     center: Center,
     address: Address,
 }
-

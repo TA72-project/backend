@@ -4,6 +4,7 @@ use actix_web::{
     Responder, Scope,
 };
 use diesel::{insert_into, ExpressionMethods, QueryDsl, RunQueryDsl};
+use macros::{list, total};
 
 use crate::{
     database::DbPool,
@@ -48,21 +49,11 @@ async fn all(
     let q2 = query.clone();
     let p2 = pool.clone();
 
-    let skills: Vec<Skill> = web::block(move || {
-        skills::table
-            .select(skills::all_columns)
-            .offset(query.offset().into())
-            .limit(query.limit().into())
-            .get_results(&mut pool.get().unwrap())
-    })
-    .await??;
+    let skills: Vec<Skill> = list!(skills, pool, query);
 
-    let total: i64 =
-        web::block(move || skills::table.count().get_result(&mut p2.get().unwrap())).await??;
+    let total = total!(skills, p2);
 
-    Ok(Json(
-        PaginatedResponse::new(skills, &q2).total(total as u32),
-    ))
+    Ok(Json(PaginatedResponse::new(skills, &q2).total(total)))
 }
 
 #[utoipa::path(
@@ -79,8 +70,7 @@ async fn all(
 )]
 #[get("/{id}")]
 async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Responder> {
-    let skill: Skill =
-        web::block(move || skills::table.find(*id).get_result(&mut pool.get().unwrap())).await??;
+    let skill: Skill = macros::get!(skills, pool, *id);
 
     Ok(Json(skill))
 }
@@ -149,12 +139,7 @@ async fn put(
 )]
 #[delete("/{id}")]
 async fn delete(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Responder> {
-    let skill: Skill = web::block(move || {
-        diesel::delete(skills::table)
-            .filter(skills::id.eq(*id))
-            .get_result(&mut pool.get().unwrap())
-    })
-    .await??;
+    let skill: Skill = macros::delete!(skills, pool, *id);
 
     Ok(Json(skill))
 }

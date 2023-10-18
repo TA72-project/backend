@@ -20,25 +20,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: cargo fmt --check --verbose
+      - run: cargo fmt --check --verbose --all
 
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: cargo clippy --verbose --no-deps
+      - run: cargo clippy --verbose --no-deps --workspace
 
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: cargo test --verbose --locked
+      - run: cargo test --verbose --locked --workspace
 
   doc:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: cargo doc --verbose --no-deps
+      - run: cargo doc --verbose --no-deps --workspace
 
   diesel:
     name: Diesel schema

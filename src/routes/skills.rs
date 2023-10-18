@@ -7,7 +7,7 @@ use diesel::{insert_into, ExpressionMethods, QueryDsl, RunQueryDsl};
 
 use crate::{
     database::DbPool,
-    error::Result,
+    error::{JsonError, Result},
     models::{NewSkill, Skill, UpdateSkill},
     pagination::{PaginatedResponse, PaginationParam},
     schema::skills,
@@ -16,7 +16,13 @@ use crate::{
 #[derive(utoipa::OpenApi)]
 #[openapi(
     paths(all, get, post, put, delete),
-    components(schemas(Skill, UpdateSkill, NewSkill, crate::pagination::PaginatedSkills))
+    components(schemas(
+        Skill,
+        UpdateSkill,
+        NewSkill,
+        crate::pagination::PaginatedSkills,
+        JsonError
+    ))
 )]
 pub struct SkillDoc;
 

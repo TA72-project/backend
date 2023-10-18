@@ -7,7 +7,7 @@ use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 
 use crate::{
     database::DbPool,
-    error::Result,
+    error::{JsonError, Result},
     models::{Address, Center, CenterWithAddress},
     pagination::{PaginatedResponse, PaginationParam},
     schema::{addresses, centers},
@@ -16,7 +16,13 @@ use crate::{
 #[derive(utoipa::OpenApi)]
 #[openapi(
     paths(all, get),
-    components(schemas(CenterWithAddress, Center, Address, crate::pagination::PaginatedCenters))
+    components(schemas(
+        CenterWithAddress,
+        Center,
+        Address,
+        crate::pagination::PaginatedCenters,
+        JsonError
+    ))
 )]
 pub struct CenterDoc;
 
@@ -67,7 +73,7 @@ async fn all(
     path = "/centers/{id}",
     responses(
         (status = 200, body = CenterWithAddress),
-        (status = NOT_FOUND)
+        (status = NOT_FOUND, body = JsonError)
     ),
     params(
         ("id" = i64, Path, description = "Center id")

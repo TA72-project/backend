@@ -2,11 +2,12 @@ use std::fmt::Display;
 
 use actix_web::{http::StatusCode, HttpResponse, ResponseError};
 use serde::Serialize;
+use utoipa::ToSchema;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Serialize)]
-struct JsonError {
+#[derive(Serialize, ToSchema)]
+pub struct JsonError {
     message: String,
 }
 

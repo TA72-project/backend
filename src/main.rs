@@ -33,6 +33,7 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/api")
                     .service(skills::routes())
+                    .service(centers::routes())
                     .service(version::routes()),
             )
     })

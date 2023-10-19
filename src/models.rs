@@ -5,7 +5,9 @@
 mod addresses;
 mod centers;
 mod skills;
+mod users;
 
 pub use addresses::*;
 pub use centers::*;
 pub use skills::*;
+pub use users::*;

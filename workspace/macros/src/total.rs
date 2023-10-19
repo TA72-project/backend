@@ -10,7 +10,7 @@
 /// ```ignore
 /// use macros::total;
 ///
-/// let total = total!(schema::skills::table, pool);
+/// let total = total!(skills, pool);
 /// ```
 #[macro_export]
 macro_rules! total {

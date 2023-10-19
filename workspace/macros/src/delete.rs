@@ -9,7 +9,7 @@
 /// # Example
 ///
 /// ```ignore
-/// let skill: Skill = macros::delete!(schema::skills, pool, *id);
+/// let skill: Skill = macros::delete!(skills, pool, *id);
 /// ```
 #[macro_export]
 macro_rules! delete {

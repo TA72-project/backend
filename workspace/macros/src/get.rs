@@ -9,7 +9,7 @@
 /// # Example
 ///
 /// ```ignore
-/// let skill: Skill = macros::get!(schema::skills, pool, *id);
+/// let skill: Skill = macros::get!(skills, pool, *id);
 /// ```
 #[macro_export]
 macro_rules! get {

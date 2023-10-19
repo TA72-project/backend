@@ -11,7 +11,7 @@
 /// ```ignore
 /// use macros::list;
 ///
-/// let skills: Vec<Skill> = list!(schema::skills, pool, query);
+/// let skills: Vec<Skill> = list!(skills, pool, query);
 /// ```
 #[macro_export]
 macro_rules! list {

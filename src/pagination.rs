@@ -48,7 +48,8 @@ impl PaginationParam {
 #[derive(Serialize, ToSchema)]
 #[aliases(
     PaginatedSkills = PaginatedResponse<Skill>,
-    PaginatedCenters = PaginatedResponse<CenterWithAddress>
+    PaginatedCenters = PaginatedResponse<CenterWithAddress>,
+    PaginatedMissionTypes = PaginatedResponse<MissionType>,
 )]
 pub struct PaginatedResponse<T: Serialize> {
     /// Paginated data

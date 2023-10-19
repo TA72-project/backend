@@ -13,6 +13,12 @@ services:
       DATABASE_URL: postgres://root:root@database/root
       CARGO_TARGET_DIR: /tmp/target
 
+    healthcheck:
+      test: curl localhost:8000/api
+      start_period: 60s
+    depends_on:
+      - database
+
   database:
     image: postgres
     ports:
@@ -20,3 +26,8 @@ services:
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: root
+
+    healthcheck:
+      test: pg_isready
+      start_period: 1s
+      start_interval: 1s

@@ -4,6 +4,7 @@ use actix_web::{
     Responder, Scope,
 };
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
+use macros::{list, total};
 
 use crate::{
     database::DbPool,
@@ -49,21 +50,9 @@ async fn all(
     let q2 = query.clone();
     let p2 = pool.clone();
 
-    let res: Vec<CenterWithAddress> = web::block(move || {
-        centers::table
-            .inner_join(addresses::table)
-            .offset(query.offset().into())
-            .limit(query.limit().into())
-            .load(&mut pool.get().unwrap())
-    })
-    .await??;
+    let res: Vec<CenterWithAddress> = list!(centers, pool, query, addresses);
 
-    let total = web::block(move || {
-        centers::table
-            .count()
-            .get_result::<i64>(&mut p2.get().unwrap())
-    })
-    .await??;
+    let total = total!(centers, p2);
 
     Ok(Json(PaginatedResponse::new(res, &q2).total(total as u32)))
 }
@@ -82,13 +71,7 @@ async fn all(
 )]
 #[get("/{id}")]
 async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Responder> {
-    let res: CenterWithAddress = web::block(move || {
-        centers::table
-            .inner_join(addresses::table)
-            .filter(centers::id.eq(*id))
-            .first(&mut pool.get().unwrap())
-    })
-    .await??;
+    let res: CenterWithAddress = macros::get!(centers, pool, *id, addresses);
 
     Ok(Json(res))
 }

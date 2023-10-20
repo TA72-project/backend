@@ -24,7 +24,7 @@ use crate::{
         JsonError
     ))
 )]
-pub struct CenterDoc;
+pub struct Doc;
 
 pub fn routes() -> Scope {
     web::scope("/centers").service(all).service(get)

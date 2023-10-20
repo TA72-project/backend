@@ -6,11 +6,10 @@ use actix_web::{
 use diesel::{insert_into, ExpressionMethods, QueryDsl, RunQueryDsl};
 use macros::{list, total};
 
-use crate::models::{NewMissionType, UpdateMissionType};
 use crate::{
     database::DbPool,
     error::{JsonError, Result},
-    models::MissionType,
+    models::{MissionType, NewMissionType, UpdateMissionType},
     pagination::{PaginatedResponse, PaginationParam},
     schema::mission_types,
 };
@@ -26,7 +25,7 @@ use crate::{
         JsonError
     ))
 )]
-pub struct SkillDoc;
+pub struct Doc;
 
 pub fn routes() -> Scope {
     web::scope("/mission_types")

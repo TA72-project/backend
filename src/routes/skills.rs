@@ -25,7 +25,7 @@ use crate::{
         JsonError
     ))
 )]
-pub struct SkillDoc;
+pub struct Doc;
 
 pub fn routes() -> Scope {
     web::scope("/skills")

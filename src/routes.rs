@@ -5,5 +5,6 @@
 
 pub mod centers;
 pub mod mission_types;
+pub mod nurses;
 pub mod skills;
 pub mod version;

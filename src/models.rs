@@ -4,13 +4,14 @@
 
 mod addresses;
 mod centers;
+mod mission_types;
+mod nurses;
 mod skills;
 mod users;
-
-mod mission_types;
 
 pub use addresses::*;
 pub use centers::*;
 pub use mission_types::*;
+pub use nurses::*;
 pub use skills::*;
 pub use users::*;

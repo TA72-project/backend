@@ -11,8 +11,9 @@ pub struct ApiDoc;
 pub fn doc() -> utoipa::openapi::OpenApi {
     let mut doc = ApiDoc::openapi();
 
-    doc.merge(skills::SkillDoc::openapi());
-    doc.merge(centers::CenterDoc::openapi());
+    doc.merge(skills::Doc::openapi());
+    doc.merge(centers::Doc::openapi());
+    doc.merge(mission_types::Doc::openapi());
 
     doc
 }

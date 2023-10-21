@@ -4,7 +4,7 @@ use actix_web::{
     Responder, Scope,
 };
 use diesel::{insert_into, ExpressionMethods, QueryDsl, RunQueryDsl};
-use macros::total;
+use macros::{list, total};
 
 use crate::{
     database::DbPool,
@@ -57,15 +57,7 @@ async fn all(
     let q2 = query.clone();
     let p2 = pool.clone();
 
-    let res: Vec<Nurse> = web::block(move || {
-        nurses::table
-            .inner_join(users::table)
-            .inner_join(addresses::table)
-            .offset(query.offset().into())
-            .limit(query.limit().into())
-            .load(&mut pool.get().unwrap())
-    })
-    .await??;
+    let res: Vec<Nurse> = list!(nurses, pool, query, users, addresses);
 
     let total = total!(nurses, p2);
 
@@ -86,14 +78,7 @@ async fn all(
 )]
 #[get("/{id}")]
 async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Responder> {
-    let res: Nurse = web::block(move || {
-        nurses::table
-            .inner_join(users::table)
-            .inner_join(addresses::table)
-            .filter(nurses::id.eq(*id))
-            .first(&mut pool.get().unwrap())
-    })
-    .await??;
+    let res: Nurse = macros::get!(nurses, pool, *id, users, addresses);
 
     Ok(Json(res))
 }

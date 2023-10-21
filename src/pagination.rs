@@ -52,6 +52,7 @@ impl PaginationParam {
     PaginatedMissionTypes = PaginatedResponse<MissionType>,
     PaginatedNurses = PaginatedResponse<Nurse>,
     PaginatedPatients = PaginatedResponse<Patient>,
+    PaginatedMissions = PaginatedResponse<Mission>,
 )]
 pub struct PaginatedResponse<T: Serialize> {
     /// Paginated data

@@ -37,6 +37,7 @@ async fn main() -> std::io::Result<()> {
                     .service(mission_types::routes())
                     .service(nurses::routes())
                     .service(patients::routes())
+                    .service(missions::routes())
                     .service(version::routes()),
             )
     })

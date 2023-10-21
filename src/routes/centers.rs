@@ -32,7 +32,6 @@ pub fn routes() -> Scope {
 }
 
 #[utoipa::path(
-    get,
     context_path = "/centers",
     params(PaginationParam),
     responses(
@@ -56,7 +55,6 @@ async fn all(
 }
 
 #[utoipa::path(
-    get,
     context_path = "/centers",
     responses(
         (status = 200, body = CenterWithAddress),

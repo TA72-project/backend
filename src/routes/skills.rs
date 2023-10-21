@@ -37,7 +37,6 @@ pub fn routes() -> Scope {
 }
 
 #[utoipa::path(
-    get,
     context_path = "/skills",
     params(PaginationParam),
     responses(
@@ -61,7 +60,6 @@ async fn all(
 }
 
 #[utoipa::path(
-    get,
     context_path = "/skills",
     responses(
         (status = 200, body = Skill),
@@ -77,7 +75,6 @@ async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Respond
 }
 
 #[utoipa::path(
-    post,
     context_path = "/skills",
     responses(
         (status = 200, body = Skill),
@@ -98,7 +95,6 @@ async fn post(new_skill: web::Json<NewSkill>, pool: web::Data<DbPool>) -> Result
 }
 
 #[utoipa::path(
-    put,
     context_path = "/skills",
     responses(
         (status = 200, body = Skill),
@@ -125,7 +121,6 @@ async fn put(
 }
 
 #[utoipa::path(
-    delete,
     context_path = "/skills",
     responses(
         (status = 200, body = Skill, description = "The deleted skill"),

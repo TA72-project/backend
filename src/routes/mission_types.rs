@@ -37,7 +37,6 @@ pub fn routes() -> Scope {
 }
 
 #[utoipa::path(
-    get,
     context_path = "/mission_types",
     params(PaginationParam),
     responses(
@@ -61,7 +60,6 @@ async fn all(
 }
 
 #[utoipa::path(
-    get,
     context_path = "/mission_types",
     responses(
         (status = 200, body = MissionType),
@@ -77,7 +75,6 @@ async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Respond
 }
 
 #[utoipa::path(
-    post,
     context_path = "/mission_types",
     responses(
         (status = 200, body = MissionType),
@@ -101,7 +98,6 @@ async fn post(
 }
 
 #[utoipa::path(
-    put,
     context_path = "/mission_types",
     responses(
         (status = 200, body = MissionType),
@@ -128,7 +124,6 @@ async fn put(
 }
 
 #[utoipa::path(
-    delete,
     context_path = "/mission_types",
     responses(
         (status = 200, body = MissionType, description = "The deleted mission type"),

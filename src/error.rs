@@ -8,14 +8,24 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Serialize, ToSchema)]
 pub struct JsonError {
-    message: String,
+    pub message: String,
 }
 
+impl JsonError {
+    pub fn new(message: String) -> Self {
+        Self { message }
+    }
+}
+
+/// A general wrapper around errors that could be produced by the different crates.
 #[non_exhaustive]
 #[derive(Debug)]
 pub enum Error {
+    /// Errors from [diesel]
     Diesel(diesel::result::Error),
+    /// Errors from [r2d2], this is also somewhat linked to [diesel]
     R2d2(r2d2::Error),
+    /// Errors from [`actix_web::web::block`]
     Blocking(actix_web::error::BlockingError),
 }
 
@@ -38,9 +48,11 @@ impl ResponseError for Error {
     }
 
     fn error_response(&self) -> HttpResponse<actix_web::body::BoxBody> {
-        HttpResponse::build(self.status_code()).json(JsonError {
-            message: format!("{self}"),
-        })
+        let message = match self {
+            Error::Diesel(diesel::result::Error::NotFound) => self.to_string(),
+            _ => "Internal Server Error".into(),
+        };
+        HttpResponse::build(self.status_code()).json(JsonError::new(message))
     }
 }
 

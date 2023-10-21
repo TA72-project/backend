@@ -67,7 +67,7 @@ async fn all(
     path = "/mission_types/{id}",
     responses(
         (status = 200, body = MissionType),
-        (status = NOT_FOUND)
+        (status = 404, body = JsonError)
     ),
     params(
         ("id" = i64, Path, description = "Missions types id")
@@ -86,7 +86,7 @@ async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Respond
     path = "/mission_types",
     responses(
         (status = 200, body = MissionType),
-        (status = 400)
+        (status = 400, body = JsonError)
     ),
     tag = "mission_types"
 )]
@@ -110,7 +110,8 @@ async fn post(
     path = "/mission_types/{id}",
     responses(
         (status = 200, body = MissionType),
-        (status = 400)
+        (status = 400, body = JsonError),
+        (status = 404, body = JsonError),
     ),
     params(
         ("id" = i64, Path, description = "Id of the mission type to update")
@@ -139,7 +140,7 @@ async fn put(
     path = "/mission_types/{id}",
     responses(
         (status = 200, body = MissionType, description = "The deleted mission type"),
-        (status = 400)
+        (status = 404, body = JsonError)
     ),
     params(
         ("id" = i64, Path, description = "Id of the mission type to delete")

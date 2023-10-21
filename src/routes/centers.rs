@@ -62,7 +62,7 @@ async fn all(
     path = "/centers/{id}",
     responses(
         (status = 200, body = CenterWithAddress),
-        (status = NOT_FOUND, body = JsonError)
+        (status = 404, body = JsonError)
     ),
     params(
         ("id" = i64, Path, description = "Center id")

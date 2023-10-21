@@ -69,7 +69,7 @@ async fn all(
     path = "/nurses/{id}",
     responses(
         (status = 200, body = Nurse),
-        (status = NOT_FOUND, body = JsonError)
+        (status = 404, body = JsonError)
     ),
     params(
         ("id" = i64, Path, description = "Nurse id")
@@ -88,7 +88,7 @@ async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Respond
     path = "/nurses",
     responses(
         (status = 200, body = NurseRecord),
-        (status = 400)
+        (status = 400, body = JsonError),
     ),
     tag = "nurses"
 )]
@@ -109,7 +109,8 @@ async fn post(new_record: web::Json<NewNurse>, pool: web::Data<DbPool>) -> Resul
     path = "/nurses/{id}",
     responses(
         (status = 200, body = NurseRecord),
-        (status = 400)
+        (status = 400, body = JsonError),
+        (status = 404, body = JsonError),
     ),
     params(
         ("id" = i64, Path, description = "Id of the nurse to update")
@@ -138,7 +139,7 @@ async fn put(
     path = "/nurses/{id}",
     responses(
         (status = 200, body = NurseRecord, description = "The deleted nurse"),
-        (status = 400)
+        (status = 404, body = JsonError),
     ),
     params(
         ("id" = i64, Path, description = "Id of the nurse to delete")

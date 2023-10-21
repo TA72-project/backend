@@ -67,7 +67,7 @@ async fn all(
     path = "/skills/{id}",
     responses(
         (status = 200, body = Skill),
-        (status = NOT_FOUND)
+        (status = 404, body = JsonError),
     ),
     params(
         ("id" = i64, Path, description = "Skill id")
@@ -86,7 +86,7 @@ async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Respond
     path = "/skills",
     responses(
         (status = 200, body = Skill),
-        (status = 400)
+        (status = 400, body = JsonError),
     ),
     tag = "skills"
 )]
@@ -107,7 +107,8 @@ async fn post(new_skill: web::Json<NewSkill>, pool: web::Data<DbPool>) -> Result
     path = "/skills/{id}",
     responses(
         (status = 200, body = Skill),
-        (status = 400)
+        (status = 400, body = JsonError),
+        (status = 404, body = JsonError),
     ),
     params(
         ("id" = i64, Path, description = "Id of the skill to update")
@@ -136,7 +137,7 @@ async fn put(
     path = "/skills/{id}",
     responses(
         (status = 200, body = Skill, description = "The deleted skill"),
-        (status = 400)
+        (status = 404, body = JsonError),
     ),
     params(
         ("id" = i64, Path, description = "Id of the skill to delete")

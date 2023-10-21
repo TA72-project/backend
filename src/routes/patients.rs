@@ -94,10 +94,7 @@ async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Respond
     tag = "patients"
 )]
 #[post("")]
-async fn post(
-    new_record: Json<NewPatient>,
-    pool: web::Data<DbPool>,
-) -> Result<impl Responder> {
+async fn post(new_record: Json<NewPatient>, pool: web::Data<DbPool>) -> Result<impl Responder> {
     let res: PatientRecord = web::block(move || {
         insert_into(patients::table)
             .values(&new_record.0)

@@ -1,6 +1,6 @@
 use actix_web::{
     middleware::{Logger, NormalizePath},
-    web::{self, JsonConfig, ServiceConfig},
+    web::{self, JsonConfig, QueryConfig, ServiceConfig},
     App, HttpResponse, HttpServer,
 };
 use error::JsonError;
@@ -29,6 +29,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .configure(json_config)
+            .configure(query_config)
             .app_data(web::Data::new(pool.clone()))
             .wrap(Logger::new("\"%r\" -> %s in %D ms"))
             .wrap(NormalizePath::trim())
@@ -61,4 +62,19 @@ fn json_config(app: &mut ServiceConfig) {
     });
 
     app.app_data(json_config);
+}
+
+/// Configures the [Query](actix_web::web::Query) extractor error response to be JSON.
+fn query_config(app: &mut ServiceConfig) {
+    let query_config = QueryConfig::default().error_handler(|err, _| {
+        actix_web::error::InternalError::from_response(
+            "",
+            HttpResponse::BadRequest()
+                .content_type("Content-Type: application/json")
+                .body(serde_json::to_string(&JsonError::new(err.to_string())).unwrap()),
+        )
+        .into()
+    });
+
+    app.app_data(query_config);
 }

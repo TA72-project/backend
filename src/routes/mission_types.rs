@@ -77,7 +77,7 @@ async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Respond
 #[utoipa::path(
     context_path = "/mission_types",
     responses(
-        (status = 200, body = MissionType),
+        (status = 200),
         (status = 400, body = JsonError)
     ),
     tag = "mission_types"
@@ -87,20 +87,20 @@ async fn post(
     new_mission_type: Json<NewMissionType>,
     pool: web::Data<DbPool>,
 ) -> Result<impl Responder> {
-    let res: MissionType = web::block(move || {
+    web::block(move || {
         insert_into(mission_types::table)
             .values(&new_mission_type.0)
-            .get_result(&mut pool.get().unwrap())
+            .execute(&mut pool.get().unwrap())
     })
     .await??;
 
-    Ok(Json(res))
+    Ok(Json(()))
 }
 
 #[utoipa::path(
     context_path = "/mission_types",
     responses(
-        (status = 200, body = MissionType),
+        (status = 200),
         (status = 400, body = JsonError),
         (status = 404, body = JsonError),
     ),
@@ -112,28 +112,28 @@ async fn put(
     update_skill: Json<UpdateMissionType>,
     pool: web::Data<DbPool>,
 ) -> Result<impl Responder> {
-    let res: MissionType = web::block(move || {
+    web::block(move || {
         diesel::update(mission_types::table)
             .set(&update_skill.0)
             .filter(mission_types::id.eq(*id))
-            .get_result(&mut pool.get().unwrap())
+            .execute(&mut pool.get().unwrap())
     })
     .await??;
 
-    Ok(Json(res))
+    Ok(Json(()))
 }
 
 #[utoipa::path(
     context_path = "/mission_types",
     responses(
-        (status = 200, body = MissionType, description = "The deleted mission type"),
+        (status = 200),
         (status = 404, body = JsonError)
     ),
     tag = "mission_types"
 )]
 #[delete("/{id}")]
 async fn delete(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Responder> {
-    let res: MissionType = macros::delete!(mission_types, pool, *id);
+    macros::delete!(mission_types, pool, *id);
 
-    Ok(Json(res))
+    Ok(Json(()))
 }

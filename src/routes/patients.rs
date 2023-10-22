@@ -80,27 +80,27 @@ async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Respond
 #[utoipa::path(
     path = "/patients",
     responses(
-        (status = 200, body = PatientRecord),
+        (status = 200),
         (status = 400, body = JsonError),
     ),
     tag = "patients"
 )]
 #[post("")]
 async fn post(new_record: Json<NewPatient>, pool: web::Data<DbPool>) -> Result<impl Responder> {
-    let res: PatientRecord = web::block(move || {
+    web::block(move || {
         insert_into(patients::table)
             .values(&new_record.0)
-            .get_result(&mut pool.get().unwrap())
+            .execute(&mut pool.get().unwrap())
     })
     .await??;
 
-    Ok(Json(res))
+    Ok(Json(()))
 }
 
 #[utoipa::path(
     context_path = "/patients",
     responses(
-        (status = 200, body = PatientRecord),
+        (status = 200),
         (status = 400, body = JsonError),
         (status = 404, body = JsonError),
     ),
@@ -112,28 +112,28 @@ async fn put(
     update_record: Json<UpdatePatient>,
     pool: web::Data<DbPool>,
 ) -> Result<impl Responder> {
-    let res: PatientRecord = web::block(move || {
+    web::block(move || {
         diesel::update(patients::table)
             .set(&update_record.0)
             .filter(patients::id.eq(*id))
-            .get_result(&mut pool.get().unwrap())
+            .execute(&mut pool.get().unwrap())
     })
     .await??;
 
-    Ok(Json(res))
+    Ok(Json(()))
 }
 
 #[utoipa::path(
     context_path = "/patients",
     responses(
-        (status = 200, body = PatientRecord, description = "The deleted patient"),
+        (status = 200),
         (status = 404, body = JsonError),
     ),
     tag = "patients"
 )]
 #[delete("/{id}")]
 async fn delete(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Responder> {
-    let res: PatientRecord = macros::delete!(patients, pool, *id);
+    macros::delete!(patients, pool, *id);
 
-    Ok(Json(res))
+    Ok(Json(()))
 }

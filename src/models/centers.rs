@@ -9,7 +9,7 @@ use crate::schema::centers;
 #[derive(Clone, Serialize, Queryable, Associations, ToSchema)]
 #[diesel(table_name = centers)]
 #[diesel(belongs_to(Address, foreign_key = id_address))]
-pub struct Center {
+pub struct CenterRecord {
     id: i64,
     name: String,
     desc: Option<String>,
@@ -23,8 +23,8 @@ pub struct Center {
 }
 
 #[derive(Clone, Serialize, Queryable, ToSchema)]
-pub struct CenterWithAddress {
+pub struct Center {
     #[serde(flatten)]
-    center: Center,
+    center: CenterRecord,
     address: Address,
 }

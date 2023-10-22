@@ -17,7 +17,7 @@ macro_rules! delete {
         actix_web::web::block(move || {
             diesel::delete($schema::table)
                 .filter($schema::id.eq($id))
-                .get_result(&mut $pool.get().unwrap())
+                .execute(&mut $pool.get().unwrap())
         })
         .await??;
     };

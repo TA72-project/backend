@@ -9,7 +9,7 @@ use macros::{list, total};
 use crate::{
     database::DbPool,
     error::{JsonError, Result},
-    models::{Address, Center, CenterWithAddress},
+    models::{Address, Center, CenterRecord},
     pagination::{PaginatedResponse, PaginationParam},
     schema::{addresses, centers},
 };
@@ -18,8 +18,8 @@ use crate::{
 #[openapi(
     paths(all, get),
     components(schemas(
-        CenterWithAddress,
         Center,
+        CenterRecord,
         Address,
         crate::pagination::PaginatedCenters,
         JsonError
@@ -47,7 +47,7 @@ async fn all(
     let q2 = query.clone();
     let p2 = pool.clone();
 
-    let res: Vec<CenterWithAddress> = list!(centers, pool, query, addresses);
+    let res: Vec<Center> = list!(centers, pool, query, addresses);
 
     let total = total!(centers, p2);
 
@@ -57,14 +57,14 @@ async fn all(
 #[utoipa::path(
     context_path = "/centers",
     responses(
-        (status = 200, body = CenterWithAddress),
+        (status = 200, body = Center),
         (status = 404, body = JsonError)
     ),
     tag = "centers"
 )]
 #[get("/{id}")]
 async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Responder> {
-    let res: CenterWithAddress = macros::get!(centers, pool, *id, addresses);
+    let res: Center = macros::get!(centers, pool, *id, addresses);
 
     Ok(Json(res))
 }

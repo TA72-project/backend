@@ -48,7 +48,7 @@ impl PaginationParam {
 #[derive(Serialize, ToSchema)]
 #[aliases(
     PaginatedSkills = PaginatedResponse<Skill>,
-    PaginatedCenters = PaginatedResponse<CenterWithAddress>,
+    PaginatedCenters = PaginatedResponse<Center>,
     PaginatedMissionTypes = PaginatedResponse<MissionType>,
     PaginatedNurses = PaginatedResponse<Nurse>,
     PaginatedPatients = PaginatedResponse<Patient>,

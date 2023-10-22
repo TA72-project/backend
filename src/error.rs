@@ -50,8 +50,12 @@ impl ResponseError for Error {
     fn error_response(&self) -> HttpResponse<actix_web::body::BoxBody> {
         let message = match self {
             Error::Diesel(diesel::result::Error::NotFound) => self.to_string(),
+            #[cfg(debug_assertions)]
+            _ => self.to_string(),
+            #[cfg(not(debug_assertions))]
             _ => "Internal Server Error".into(),
         };
+
         HttpResponse::build(self.status_code()).json(JsonError::new(message))
     }
 }

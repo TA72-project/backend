@@ -40,13 +40,10 @@ pub fn routes() -> Scope {
 }
 
 #[utoipa::path(
-    get,
-    path = "/patients",
+    context_path = "/patients",
+    params(PaginationParam),
     responses(
         (status = 200, description = "Paginated list of patients", body = PaginatedPatients),
-    ),
-    params(
-        PaginationParam
     ),
     tag = "patients"
 )]
@@ -66,14 +63,10 @@ async fn all(
 }
 
 #[utoipa::path(
-    get,
-    path = "/patients/{id}",
+    context_path = "/patients",
     responses(
         (status = 200, body = Patient),
-        (status = NOT_FOUND, body = JsonError)
-    ),
-    params(
-        ("id" = i64, Path, description = "Patient id")
+        (status = 404, body = JsonError)
     ),
     tag = "patients"
 )]
@@ -85,11 +78,10 @@ async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Respond
 }
 
 #[utoipa::path(
-    post,
     path = "/patients",
     responses(
         (status = 200, body = PatientRecord),
-        (status = 400)
+        (status = 400, body = JsonError),
     ),
     tag = "patients"
 )]
@@ -106,14 +98,11 @@ async fn post(new_record: Json<NewPatient>, pool: web::Data<DbPool>) -> Result<i
 }
 
 #[utoipa::path(
-    put,
-    path = "/patients/{id}",
+    context_path = "/patients",
     responses(
         (status = 200, body = PatientRecord),
-        (status = 400)
-    ),
-    params(
-        ("id" = i64, Path, description = "Id of the patient to update")
+        (status = 400, body = JsonError),
+        (status = 404, body = JsonError),
     ),
     tag = "patients"
 )]
@@ -135,14 +124,10 @@ async fn put(
 }
 
 #[utoipa::path(
-    delete,
-    path = "/patients/{id}",
+    context_path = "/patients",
     responses(
         (status = 200, body = PatientRecord, description = "The deleted patient"),
-        (status = 400)
-    ),
-    params(
-        ("id" = i64, Path, description = "Id of the patient to delete")
+        (status = 404, body = JsonError),
     ),
     tag = "patients"
 )]

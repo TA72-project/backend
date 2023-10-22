@@ -37,13 +37,10 @@ pub fn routes() -> Scope {
 }
 
 #[utoipa::path(
-    get,
-    path = "/mission_types",
+    context_path = "/mission_types",
+    params(PaginationParam),
     responses(
         (status = 200, description = "Paginated list of missions types", body = PaginatedMissionTypes),
-    ),
-    params(
-        PaginationParam
     ),
     tag = "mission_types"
 )]
@@ -63,14 +60,10 @@ async fn all(
 }
 
 #[utoipa::path(
-    get,
-    path = "/mission_types/{id}",
+    context_path = "/mission_types",
     responses(
         (status = 200, body = MissionType),
-        (status = NOT_FOUND)
-    ),
-    params(
-        ("id" = i64, Path, description = "Missions types id")
+        (status = 404, body = JsonError)
     ),
     tag = "mission_types"
 )]
@@ -82,11 +75,10 @@ async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Respond
 }
 
 #[utoipa::path(
-    post,
-    path = "/mission_types",
+    context_path = "/mission_types",
     responses(
         (status = 200, body = MissionType),
-        (status = 400)
+        (status = 400, body = JsonError)
     ),
     tag = "mission_types"
 )]
@@ -106,14 +98,11 @@ async fn post(
 }
 
 #[utoipa::path(
-    put,
-    path = "/mission_types/{id}",
+    context_path = "/mission_types",
     responses(
         (status = 200, body = MissionType),
-        (status = 400)
-    ),
-    params(
-        ("id" = i64, Path, description = "Id of the mission type to update")
+        (status = 400, body = JsonError),
+        (status = 404, body = JsonError),
     ),
     tag = "mission_types"
 )]
@@ -135,14 +124,10 @@ async fn put(
 }
 
 #[utoipa::path(
-    delete,
-    path = "/mission_types/{id}",
+    context_path = "/mission_types",
     responses(
         (status = 200, body = MissionType, description = "The deleted mission type"),
-        (status = 400)
-    ),
-    params(
-        ("id" = i64, Path, description = "Id of the mission type to delete")
+        (status = 404, body = JsonError)
     ),
     tag = "mission_types"
 )]

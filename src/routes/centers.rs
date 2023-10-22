@@ -32,13 +32,10 @@ pub fn routes() -> Scope {
 }
 
 #[utoipa::path(
-    get,
-    path = "/centers",
+    context_path = "/centers",
+    params(PaginationParam),
     responses(
         (status = 200, description = "Paginated list of centers", body = PaginatedCenters),
-    ),
-    params(
-        PaginationParam
     ),
     tag = "centers"
 )]
@@ -58,14 +55,10 @@ async fn all(
 }
 
 #[utoipa::path(
-    get,
-    path = "/centers/{id}",
+    context_path = "/centers",
     responses(
         (status = 200, body = CenterWithAddress),
-        (status = NOT_FOUND, body = JsonError)
-    ),
-    params(
-        ("id" = i64, Path, description = "Center id")
+        (status = 404, body = JsonError)
     ),
     tag = "centers"
 )]

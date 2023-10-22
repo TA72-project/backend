@@ -1,7 +1,9 @@
 use actix_web::{
     middleware::{Logger, NormalizePath},
-    web, App, HttpServer,
+    web::{self, JsonConfig, QueryConfig, ServiceConfig},
+    App, HttpResponse, HttpServer,
 };
+use error::JsonError;
 use utoipa_redoc::{Redoc, Servable};
 
 mod database;
@@ -26,6 +28,8 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
+            .configure(json_config)
+            .configure(query_config)
             .app_data(web::Data::new(pool.clone()))
             .wrap(Logger::new("\"%r\" -> %s in %D ms"))
             .wrap(NormalizePath::trim())
@@ -43,4 +47,34 @@ async fn main() -> std::io::Result<()> {
     .bind(("0.0.0.0", 8000))?
     .run()
     .await
+}
+
+/// Configures the [Json](actix_web::web::Json) extractor error response to be JSON.
+fn json_config(app: &mut ServiceConfig) {
+    let json_config = JsonConfig::default().error_handler(|err, _| {
+        actix_web::error::InternalError::from_response(
+            "",
+            HttpResponse::BadRequest()
+                .content_type("Content-Type: application/json")
+                .body(serde_json::to_string(&JsonError::new(err.to_string())).unwrap()),
+        )
+        .into()
+    });
+
+    app.app_data(json_config);
+}
+
+/// Configures the [Query](actix_web::web::Query) extractor error response to be JSON.
+fn query_config(app: &mut ServiceConfig) {
+    let query_config = QueryConfig::default().error_handler(|err, _| {
+        actix_web::error::InternalError::from_response(
+            "",
+            HttpResponse::BadRequest()
+                .content_type("Content-Type: application/json")
+                .body(serde_json::to_string(&JsonError::new(err.to_string())).unwrap()),
+        )
+        .into()
+    });
+
+    app.app_data(query_config);
 }

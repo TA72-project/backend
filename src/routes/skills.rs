@@ -37,13 +37,10 @@ pub fn routes() -> Scope {
 }
 
 #[utoipa::path(
-    get,
-    path = "/skills",
+    context_path = "/skills",
+    params(PaginationParam),
     responses(
         (status = 200, description = "Paginated list of skills", body = PaginatedSkills),
-    ),
-    params(
-        PaginationParam
     ),
     tag = "skills"
 )]
@@ -63,14 +60,10 @@ async fn all(
 }
 
 #[utoipa::path(
-    get,
-    path = "/skills/{id}",
+    context_path = "/skills",
     responses(
         (status = 200, body = Skill),
-        (status = NOT_FOUND)
-    ),
-    params(
-        ("id" = i64, Path, description = "Skill id")
+        (status = 404, body = JsonError),
     ),
     tag = "skills"
 )]
@@ -82,11 +75,10 @@ async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Respond
 }
 
 #[utoipa::path(
-    post,
-    path = "/skills",
+    context_path = "/skills",
     responses(
         (status = 200, body = Skill),
-        (status = 400)
+        (status = 400, body = JsonError),
     ),
     tag = "skills"
 )]
@@ -103,14 +95,11 @@ async fn post(new_skill: web::Json<NewSkill>, pool: web::Data<DbPool>) -> Result
 }
 
 #[utoipa::path(
-    put,
-    path = "/skills/{id}",
+    context_path = "/skills",
     responses(
         (status = 200, body = Skill),
-        (status = 400)
-    ),
-    params(
-        ("id" = i64, Path, description = "Id of the skill to update")
+        (status = 400, body = JsonError),
+        (status = 404, body = JsonError),
     ),
     tag = "skills"
 )]
@@ -132,14 +121,10 @@ async fn put(
 }
 
 #[utoipa::path(
-    delete,
-    path = "/skills/{id}",
+    context_path = "/skills",
     responses(
         (status = 200, body = Skill, description = "The deleted skill"),
-        (status = 400)
-    ),
-    params(
-        ("id" = i64, Path, description = "Id of the skill to delete")
+        (status = 404, body = JsonError),
     ),
     tag = "skills"
 )]

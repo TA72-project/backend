@@ -27,8 +27,7 @@ env_logger = "0.10.0"
 macros = { version = "0.1.0", path = "workspace/macros" }
 # Database pool
 r2d2 = "0.8.10"
-# Serialization, deserialization. JSON transformations
-serde = "1.0.189"
+serde = { version = "1.0.189", features = ["derive"] }
 serde_json = "1.0.107"
 # OpenApi metadata
 utoipa = { version = "4.0.0", features = ["actix_extras", "chrono", "preserve_order"] }

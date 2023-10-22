@@ -67,7 +67,7 @@ async fn all(
     })
     .await??;
 
-    let total = total!(patients, p2);
+    let total = total!(missions, p2);
 
     Ok(Json(PaginatedResponse::new(res, &q2).total(total)))
 }

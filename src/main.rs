@@ -1,5 +1,5 @@
 use actix_web::{
-    middleware::{Logger, NormalizePath},
+    middleware::{Logger, NormalizePath, Compress},
     web::{self, JsonConfig, QueryConfig, ServiceConfig},
     App, HttpResponse, HttpServer,
 };
@@ -33,6 +33,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(pool.clone()))
             .wrap(Logger::new("\"%r\" -> %s in %D ms"))
             .wrap(NormalizePath::trim())
+            .wrap(Compress::default())
             .service(Redoc::with_url("/doc", documentation::doc()))
             .service(
                 web::scope("/api")

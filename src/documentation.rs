@@ -17,6 +17,7 @@ pub fn doc() -> utoipa::openapi::OpenApi {
     doc.merge(nurses::Doc::openapi());
     doc.merge(patients::Doc::openapi());
     doc.merge(missions::Doc::openapi());
+    doc.merge(visits::Doc::openapi());
 
     doc
 }

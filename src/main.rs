@@ -1,5 +1,5 @@
 use actix_web::{
-    middleware::{Logger, NormalizePath, Compress},
+    middleware::{Compress, Logger, NormalizePath},
     web::{self, JsonConfig, QueryConfig, ServiceConfig},
     App, HttpResponse, HttpServer,
 };

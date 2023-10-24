@@ -3,7 +3,7 @@ use actix_web::{
     web::{self, Json},
     Responder, Scope,
 };
-use diesel::{insert_into, ExpressionMethods, QueryDsl, RunQueryDsl};
+use diesel::{insert_into, BelongingToDsl, ExpressionMethods, GroupedBy, QueryDsl, RunQueryDsl};
 use macros::{list, total};
 
 use crate::{
@@ -11,7 +11,7 @@ use crate::{
     error::{JsonError, Result},
     models::*,
     pagination::{PaginatedResponse, PaginationParam},
-    schema::{addresses, nurses, users},
+    schema::{addresses, nurses, skills, users},
 };
 
 #[derive(utoipa::OpenApi)]
@@ -19,6 +19,7 @@ use crate::{
     paths(all, get, post, put, delete),
     components(schemas(
         Nurse,
+        SkilledNurse,
         NurseRecord,
         UpdateNurse,
         NewNurse,
@@ -53,10 +54,25 @@ async fn all(
 ) -> Result<impl Responder> {
     let q2 = query.clone();
     let p2 = pool.clone();
+    let p3 = pool.clone();
 
-    let res: Vec<Nurse> = list!(nurses, pool, query, users, addresses);
-
+    // Get nurses
+    let nurses: Vec<Nurse> = list!(nurses, pool, query, users, addresses);
+    // Get total of nurses
     let total = total!(nurses, p2);
+
+    // Get database records
+    let nurses_records: Vec<_> = nurses.iter().map(|n| n.nurse).collect();
+
+    // Get skills and group by nurse
+    let res = LNurseSkill::belonging_to(&nurses_records)
+        .inner_join(skills::table)
+        .load::<(LNurseSkill, Skill)>(&mut p3.get()?)?
+        .grouped_by(&nurses_records)
+        .into_iter()
+        .zip(nurses)
+        .map(SkilledNurse::from)
+        .collect();
 
     Ok(Json(PaginatedResponse::new(res, &q2).total(total as u32)))
 }
@@ -64,14 +80,23 @@ async fn all(
 #[utoipa::path(
     context_path = "/nurses",
     responses(
-        (status = 200, body = Nurse),
+        (status = 200, body = SkilledNurse),
         (status = 404, body = JsonError)
     ),
     tag = "nurses"
 )]
 #[get("/{id}")]
 async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Responder> {
-    let res: Nurse = macros::get!(nurses, pool, *id, users, addresses);
+    let p2 = pool.clone();
+
+    let nurse: Nurse = macros::get!(nurses, pool, *id, users, addresses);
+
+    let skills: Vec<Skill> = LNurseSkill::belonging_to(&nurse.nurse)
+        .inner_join(skills::table)
+        .select(skills::all_columns)
+        .load(&mut p2.get()?)?;
+
+    let res = SkilledNurse { nurse, skills };
 
     Ok(Json(res))
 }

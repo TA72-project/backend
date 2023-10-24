@@ -50,7 +50,7 @@ impl PaginationParam {
     PaginatedSkills = PaginatedResponse<Skill>,
     PaginatedCenters = PaginatedResponse<Center>,
     PaginatedMissionTypes = PaginatedResponse<MissionType>,
-    PaginatedNurses = PaginatedResponse<Nurse>,
+    PaginatedNurses = PaginatedResponse<SkilledNurse>,
     PaginatedPatients = PaginatedResponse<Patient>,
     PaginatedMissions = PaginatedResponse<Mission>,
 )]

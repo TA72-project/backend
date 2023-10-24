@@ -1,11 +1,11 @@
-use diesel::{AsChangeset, Associations, Insertable, Queryable};
+use diesel::{AsChangeset, Associations, Identifiable, Insertable, Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use super::{Address, User};
+use super::*;
 use crate::schema::nurses;
 
-#[derive(Clone, Serialize, Queryable, Associations, ToSchema)]
+#[derive(Clone, Copy, Identifiable, Selectable, Serialize, Queryable, Associations, ToSchema)]
 #[diesel(table_name = nurses)]
 #[diesel(belongs_to(Address, foreign_key = id_address))]
 #[diesel(belongs_to(User, foreign_key = id_user))]
@@ -17,13 +17,31 @@ pub struct NurseRecord {
     id_address: i64,
 }
 
-#[derive(Clone, Serialize, Queryable, ToSchema)]
+#[derive(Serialize, Queryable, ToSchema)]
 pub struct Nurse {
     #[serde(flatten)]
-    nurse: NurseRecord,
+    pub nurse: NurseRecord,
     #[serde(flatten)]
     user: User,
     address: Address,
+}
+
+#[derive(Serialize, Queryable, ToSchema)]
+pub struct SkilledNurse {
+    #[serde(flatten)]
+    pub nurse: Nurse,
+    pub skills: Vec<Skill>,
+}
+
+impl From<(Vec<(LNurseSkill, Skill)>, Nurse)> for SkilledNurse {
+    fn from(value: (Vec<(LNurseSkill, Skill)>, Nurse)) -> Self {
+        let (skills, nurse) = value;
+
+        Self {
+            nurse,
+            skills: skills.into_iter().map(|(_, skill)| skill).collect(),
+        }
+    }
 }
 
 #[derive(Clone, Deserialize, AsChangeset, ToSchema)]

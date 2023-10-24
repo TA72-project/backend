@@ -1,1 +1,1 @@
-DROP TABLE "skills" IF EXISTS;
+DROP TABLE IF EXISTS "skills";

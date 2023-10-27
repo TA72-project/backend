@@ -4,6 +4,7 @@
 //! function which returns an [actix_web::Scope] with the routes defined.
 
 pub mod centers;
+pub mod managers;
 pub mod mission_types;
 pub mod missions;
 pub mod nurses;

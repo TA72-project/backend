@@ -200,13 +200,15 @@ async fn ical(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Respon
         .select(Visit::as_select())
         .load_iter::<Visit, DefaultLoadingMode>(&mut pool.get()?)?;
 
-    let mut cal: Calendar = visits.map(|visit| Event::from(visit.unwrap())).collect();
+    let cal: Result<Calendar> = visits.map(|visit| Ok(Event::from(visit?))).collect();
 
-    cal.name(&format!(
-        "Planning de {} {}",
-        nurse.fname,
-        nurse.lname.to_uppercase()
-    ));
+    cal.map(|mut c| {
+        c.name(&format!(
+            "Planning de {} {}",
+            nurse.fname,
+            nurse.lname.to_uppercase()
+        ));
 
-    Ok(cal.to_string())
+        c.to_string()
+    })
 }

@@ -22,7 +22,7 @@ pub struct Nurse {
     #[serde(flatten)]
     pub nurse: NurseRecord,
     #[serde(flatten)]
-    user: User,
+    pub user: User,
     address: Address,
 }
 

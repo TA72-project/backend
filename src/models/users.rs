@@ -10,8 +10,8 @@ use crate::schema::users;
 #[diesel(belongs_to(Center, foreign_key = id_center))]
 pub struct User {
     id: i64,
-    fname: String,
-    lname: String,
+    pub fname: String,
+    pub lname: String,
     mail: String,
     phone: Option<String>,
     #[serde(skip)]

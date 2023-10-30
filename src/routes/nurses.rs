@@ -15,14 +15,14 @@ use crate::{
     models::*,
     pagination::{PaginatedResponse, PaginationParam},
     schema::{
-        addresses, l_visits_nurses, mission_types, missions, nurses, patients, skills, users,
+        self, addresses, l_visits_nurses, mission_types, missions, nurses, patients, skills, users,
         visits,
     },
 };
 
 #[derive(utoipa::OpenApi)]
 #[openapi(
-    paths(all, get, post, put, delete, ical),
+    paths(all, get, post, put, delete, availabilities, ical),
     components(schemas(
         Nurse,
         SkilledNurse,
@@ -30,7 +30,9 @@ use crate::{
         UpdateNurse,
         NewNurse,
         User,
+        Availability,
         crate::pagination::PaginatedNurses,
+        crate::pagination::PaginatedAvailabilities,
         JsonError
     ))
 )]
@@ -43,6 +45,7 @@ pub fn routes() -> Scope {
         .service(post)
         .service(put)
         .service(delete)
+        .service(availabilities)
         .service(ical)
 }
 
@@ -167,6 +170,36 @@ async fn delete(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Resp
     macros::delete!(nurses, pool, *id);
 
     Ok(Json(()))
+}
+
+#[utoipa::path(
+    context_path = "/nurses",
+    params(PaginationParam),
+    responses(
+        (status = 200, description = "Paginated list of availabilities from the given nurse", body = PaginatedAvailabilities),
+    ),
+    tag = "nurses"
+)]
+#[get("/{id}/availabilities")]
+async fn availabilities(
+    query: web::Query<PaginationParam>,
+    id: web::Path<i64>,
+    pool: web::Data<DbPool>,
+) -> Result<impl Responder> {
+    let res: Vec<Availability> = schema::availabilities::table
+        .filter(schema::availabilities::id_nurse.eq(*id))
+        .limit(query.limit().into())
+        .offset(query.offset().into())
+        .load(&mut pool.get()?)?;
+
+    let total: i64 = schema::availabilities::table
+        .filter(schema::availabilities::id_nurse.eq(*id))
+        .count()
+        .get_result(&mut pool.get()?)?;
+
+    Ok(Json(
+        PaginatedResponse::new(res, &query).total(total as u32),
+    ))
 }
 
 #[utoipa::path(

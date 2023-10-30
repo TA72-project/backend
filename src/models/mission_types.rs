@@ -1,14 +1,14 @@
-use diesel::{AsChangeset, Insertable, Queryable};
+use diesel::{AsChangeset, Insertable, Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::schema::mission_types;
 
-#[derive(Serialize, Queryable, ToSchema)]
+#[derive(Serialize, Queryable, Selectable, ToSchema)]
 #[diesel(table_name = mission_types)]
 pub struct MissionType {
     id: i64,
-    name: String,
+    pub name: String,
     people_required: i16,
 }
 

@@ -1,11 +1,11 @@
-use diesel::{AsChangeset, Insertable, Queryable};
+use diesel::{AsChangeset, Insertable, Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use super::{Address, User};
 use crate::schema::patients;
 
-#[derive(Serialize, Queryable, ToSchema)]
+#[derive(Serialize, Queryable, Selectable, ToSchema)]
 #[diesel(table_name = patients)]
 pub struct PatientRecord {
     id: i64,
@@ -13,14 +13,17 @@ pub struct PatientRecord {
     id_address: i64,
 }
 
-#[derive(Serialize, Queryable, ToSchema)]
+#[derive(Serialize, Queryable, Selectable, ToSchema)]
 #[diesel(table_name = patients)]
 pub struct Patient {
     #[serde(flatten)]
+    #[diesel(embed)]
     patient: PatientRecord,
     #[serde(flatten)]
-    user: User,
-    address: Address,
+    #[diesel(embed)]
+    pub user: User,
+    #[diesel(embed)]
+    pub address: Address,
 }
 
 #[derive(Deserialize, AsChangeset, ToSchema)]

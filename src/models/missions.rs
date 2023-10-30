@@ -1,17 +1,17 @@
 use chrono::NaiveDateTime;
-use diesel::{AsChangeset, Insertable, Queryable};
+use diesel::{AsChangeset, Insertable, Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use super::{MissionType, Patient};
 use crate::schema::missions;
 
-#[derive(Serialize, Queryable, ToSchema)]
+#[derive(Serialize, Queryable, Selectable, ToSchema)]
 #[diesel(table_name = missions)]
 pub struct MissionRecord {
     id: i64,
     /// Mission description
-    desc: Option<String>,
+    pub desc: Option<String>,
     /// Start of the time window the mission should be fulfilled in
     start: NaiveDateTime,
     /// End of the time window the mission should be fulfilled in
@@ -28,12 +28,15 @@ pub struct MissionRecord {
     id_patient: i64,
 }
 
-#[derive(Serialize, Queryable, ToSchema)]
+#[derive(Serialize, Queryable, Selectable, ToSchema)]
 pub struct Mission {
     #[serde(flatten)]
-    mission: MissionRecord,
-    mission_type: MissionType,
-    patient: Patient,
+    #[diesel(embed)]
+    pub mission: MissionRecord,
+    #[diesel(embed)]
+    pub mission_type: MissionType,
+    #[diesel(embed)]
+    pub patient: Patient,
 }
 
 #[derive(Deserialize, AsChangeset, ToSchema)]

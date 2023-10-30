@@ -3,7 +3,10 @@ use actix_web::{
     web::{self, Json},
     Responder, Scope,
 };
-use diesel::{insert_into, BelongingToDsl, ExpressionMethods, GroupedBy, QueryDsl, RunQueryDsl};
+use diesel::{
+    connection::DefaultLoadingMode, insert_into, BelongingToDsl, ExpressionMethods, GroupedBy,
+    QueryDsl, RunQueryDsl, SelectableHelper,
+};
 use macros::{list, total};
 
 use crate::{
@@ -11,12 +14,15 @@ use crate::{
     error::{JsonError, Result},
     models::*,
     pagination::{PaginatedResponse, PaginationParam},
-    schema::{addresses, nurses, skills, users},
+    schema::{
+        addresses, l_visits_nurses, mission_types, missions, nurses, patients, skills, users,
+        visits,
+    },
 };
 
 #[derive(utoipa::OpenApi)]
 #[openapi(
-    paths(all, get, post, put, delete),
+    paths(all, get, post, put, delete, ical),
     components(schemas(
         Nurse,
         SkilledNurse,
@@ -37,6 +43,7 @@ pub fn routes() -> Scope {
         .service(post)
         .service(put)
         .service(delete)
+        .service(ical)
 }
 
 #[utoipa::path(
@@ -160,4 +167,48 @@ async fn delete(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Resp
     macros::delete!(nurses, pool, *id);
 
     Ok(Json(()))
+}
+
+#[utoipa::path(
+    context_path = "/nurses",
+    responses(
+        (status = 200, body = String, description = "Icalendar data"),
+        (status = 404, body = JsonError)
+    ),
+    tag = "nurses"
+)]
+#[get("/{id}/ical")]
+async fn ical(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Responder> {
+    use icalendar::*;
+
+    let nurse: User = users::table
+        .inner_join(nurses::table)
+        .filter(nurses::id.eq(*id))
+        .select(users::all_columns)
+        .first(&mut pool.get()?)?;
+
+    let visits = visits::table
+        .inner_join(
+            missions::table.inner_join(mission_types::table).inner_join(
+                patients::table
+                    .inner_join(users::table)
+                    .inner_join(addresses::table),
+            ),
+        )
+        .inner_join(l_visits_nurses::table)
+        .filter(l_visits_nurses::id_nurse.eq(*id))
+        .select(Visit::as_select())
+        .load_iter::<Visit, DefaultLoadingMode>(&mut pool.get()?)?;
+
+    let cal: Result<Calendar> = visits.map(|visit| Ok(Event::from(visit?))).collect();
+
+    cal.map(|mut c| {
+        c.name(&format!(
+            "Planning de {} {}",
+            nurse.fname,
+            nurse.lname.to_uppercase()
+        ));
+
+        c.to_string()
+    })
 }

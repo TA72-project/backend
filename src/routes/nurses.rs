@@ -15,8 +15,8 @@ use crate::{
     models::*,
     pagination::{PaginatedResponse, PaginationParam},
     schema::{
-        self, addresses, l_visits_nurses, mission_types, missions, nurses, patients, skills,
-        users, visits,
+        self, addresses, l_visits_nurses, mission_types, missions, nurses, patients, skills, users,
+        visits,
     },
 };
 
@@ -200,6 +200,7 @@ async fn availabilities(
     Ok(Json(
         PaginatedResponse::new(res, &query).total(total as u32),
     ))
+}
 
 #[utoipa::path(
     context_path = "/nurses",

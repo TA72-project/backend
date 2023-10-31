@@ -6,6 +6,7 @@ use actix_web::{
 use error::JsonError;
 use utoipa_redoc::{Redoc, Servable};
 
+mod auth;
 mod database;
 mod documentation;
 mod error;
@@ -45,6 +46,7 @@ async fn main() -> std::io::Result<()> {
                     .service(missions::routes())
                     .service(visits::routes())
                     .service(managers::routes())
+                    .service(routes::auth::routes())
                     .service(version::routes()),
             )
     })

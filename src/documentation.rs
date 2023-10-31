@@ -19,6 +19,7 @@ pub fn doc() -> utoipa::openapi::OpenApi {
     doc.merge(missions::Doc::openapi());
     doc.merge(visits::Doc::openapi());
     doc.merge(managers::Doc::openapi());
+    doc.merge(auth::Doc::openapi());
 
     doc
 }

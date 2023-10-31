@@ -1,6 +1,6 @@
 use chrono::NaiveDateTime;
 use diesel::{Identifiable, Queryable, Selectable};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::schema::users;
@@ -21,4 +21,10 @@ pub struct User {
     #[serde(skip)]
     token_gentime: Option<NaiveDateTime>,
     id_center: i64,
+}
+
+#[derive(Deserialize, ToSchema)]
+pub struct LoginUser {
+    pub mail: String,
+    pub password: String,
 }

@@ -27,6 +27,11 @@ pub enum Error {
     R2d2(r2d2::Error),
     /// Errors from [`actix_web::web::block`]
     Blocking(actix_web::error::BlockingError),
+    /// Errors from [`jsonwebtoken`]
+    JwtError(jsonwebtoken::errors::ErrorKind),
+
+    /// The auth token has not been provided
+    TokenNotProvided,
 }
 
 impl Display for Error {
@@ -35,6 +40,8 @@ impl Display for Error {
             Error::Diesel(err) => err.fmt(f),
             Error::R2d2(err) => err.fmt(f),
             Error::Blocking(err) => err.fmt(f),
+            Error::JwtError(err) => std::fmt::Debug::fmt(&err, f),
+            Error::TokenNotProvided => write!(f, "Token not provided"),
         }
     }
 }
@@ -43,13 +50,16 @@ impl ResponseError for Error {
     fn status_code(&self) -> StatusCode {
         match self {
             Error::Diesel(diesel::result::Error::NotFound) => StatusCode::NOT_FOUND,
+            Error::TokenNotProvided | Error::JwtError(_) => StatusCode::UNAUTHORIZED,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 
     fn error_response(&self) -> HttpResponse<actix_web::body::BoxBody> {
         let message = match self {
-            Error::Diesel(diesel::result::Error::NotFound) => self.to_string(),
+            Error::Diesel(diesel::result::Error::NotFound)
+            | Error::TokenNotProvided
+            | Error::JwtError(_) => self.to_string(),
             #[cfg(debug_assertions)]
             _ => self.to_string(),
             #[cfg(not(debug_assertions))]
@@ -75,5 +85,11 @@ impl From<r2d2::Error> for Error {
 impl From<actix_web::error::BlockingError> for Error {
     fn from(value: actix_web::error::BlockingError) -> Self {
         Self::Blocking(value)
+    }
+}
+
+impl From<jsonwebtoken::errors::Error> for Error {
+    fn from(value: jsonwebtoken::errors::Error) -> Self {
+        Self::JwtError(value.into_kind())
     }
 }

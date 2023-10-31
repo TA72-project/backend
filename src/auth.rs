@@ -5,9 +5,7 @@ use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, DecodingKey, EncodingKey, Validation};
 use serde::{Deserialize, Serialize};
 
-use crate::{
-    error::{Error, Result},
-};
+use crate::error::{Error, Result};
 
 type Hours = i64;
 

@@ -1,6 +1,6 @@
 use std::future::Ready;
 
-use actix_web::FromRequest;
+use actix_web::{dev::ServiceRequest, FromRequest, HttpRequest};
 use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, DecodingKey, EncodingKey, Validation};
 use serde::{Deserialize, Serialize};
@@ -65,30 +65,39 @@ impl FromRequest for Auth {
 
     type Future = Ready<Result<Auth>>;
 
-    fn from_request(
-        req: &actix_web::HttpRequest,
-        _payload: &mut actix_web::dev::Payload,
-    ) -> Self::Future {
-        use std::future::ready;
+    fn from_request(req: &HttpRequest, _payload: &mut actix_web::dev::Payload) -> Self::Future {
+        std::future::ready(get_token(req))
+    }
+}
 
-        let Some(received_token) = req.cookie(COOKIE_TOKEN_NAME) else {
-            return ready(Err(Error::TokenNotProvided));
-        };
+/// See [actix_web_grants]
+pub async fn extract_permissions(
+    req: &ServiceRequest,
+) -> std::result::Result<Vec<Role>, actix_web::Error> {
+    match get_token(req.request()) {
+        Ok(auth) => Ok(vec![auth.role]),
+        Err(_) => Ok(Vec::new()),
+    }
+}
 
-        // Require the `exp` field to be present in the JWT.
-        // Other fields are checked only if present.
-        let mut validation = Validation::default();
-        validation.set_required_spec_claims(&["exp"]);
+fn get_token(req: &HttpRequest) -> Result<Auth> {
+    let Some(received_token) = req.cookie(COOKIE_TOKEN_NAME) else {
+        return Err(Error::TokenNotProvided);
+    };
 
-        let decoded_token = decode::<Auth>(
-            received_token.value(),
-            &DecodingKey::from_secret(JWT_SECRET.as_bytes()),
-            &validation,
-        );
+    // Require the `exp` field to be present in the JWT.
+    // Other fields are checked only if present.
+    let mut validation = Validation::default();
+    validation.set_required_spec_claims(&["exp"]);
 
-        ready(match decoded_token {
-            Ok(t) => Ok(t.claims),
-            Err(err) => Err(err.into()),
-        })
+    let decoded_token = decode::<Auth>(
+        received_token.value(),
+        &DecodingKey::from_secret(JWT_SECRET.as_bytes()),
+        &validation,
+    );
+
+    match decoded_token {
+        Ok(t) => Ok(t.claims),
+        Err(err) => Err(err.into()),
     }
 }

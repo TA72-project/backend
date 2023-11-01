@@ -70,7 +70,9 @@ impl FromRequest for Auth {
     }
 }
 
-/// See [actix_web_grants]
+/// Extracts the roles from the token.
+///
+/// See [actix_web_grants].
 pub async fn extract_permissions(
     req: &ServiceRequest,
 ) -> std::result::Result<Vec<Role>, actix_web::Error> {
@@ -80,6 +82,7 @@ pub async fn extract_permissions(
     }
 }
 
+/// Get the token from a request if it exists and decode it.
 fn get_token(req: &HttpRequest) -> Result<Auth> {
     let Some(received_token) = req.cookie(COOKIE_TOKEN_NAME) else {
         return Err(Error::TokenNotProvided);

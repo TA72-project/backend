@@ -30,7 +30,8 @@ pub fn routes() -> Scope {
         (status = 200),
         (status = 401),
     ),
-    tag = "auth"
+    tag = "auth",
+    security(())
 )]
 #[post("/login")]
 pub async fn login(pool: web::Data<DbPool>, user: Json<LoginUser>) -> Result<impl Responder> {
@@ -66,7 +67,10 @@ pub async fn login(pool: web::Data<DbPool>, user: Json<LoginUser>) -> Result<imp
         (status = 200),
         (status = 401),
     ),
-    tag = "auth"
+    tag = "auth",
+    security(
+        ("token" = [])
+    )
 )]
 #[get("/logout")]
 pub async fn logout(_: Auth) -> Result<impl Responder> {

@@ -3,6 +3,7 @@ use actix_web::{
     web::{self, Json},
     Responder, Scope,
 };
+use actix_web_grants::proc_macro::{has_any_role, has_roles};
 use diesel::{
     connection::DefaultLoadingMode, insert_into, BelongingToDsl, ExpressionMethods, GroupedBy,
     QueryDsl, RunQueryDsl, SelectableHelper,
@@ -10,6 +11,7 @@ use diesel::{
 use macros::{list, total};
 
 use crate::{
+    auth::{Auth, Role},
     database::DbPool,
     error::{JsonError, Result},
     models::*,
@@ -55,12 +57,17 @@ pub fn routes() -> Scope {
     responses(
         (status = 200, description = "Paginated list of nurses", body = PaginatedNurses),
     ),
-    tag = "nurses"
+    tag = "nurses",
+    security(
+        ("token" = ["manager"])
+    )
 )]
 #[get("")]
+#[has_roles("Role::Manager", type = "Role")]
 async fn all(
     query: web::Query<PaginationParam>,
     pool: web::Data<DbPool>,
+    _: Auth,
 ) -> Result<impl Responder> {
     let q2 = query.clone();
     let p2 = pool.clone();
@@ -93,11 +100,19 @@ async fn all(
         (status = 200, body = SkilledNurse),
         (status = 404, body = JsonError)
     ),
-    tag = "nurses"
+    tag = "nurses",
+    security(
+        ("token" = ["manager", "nurse"])
+    )
 )]
 #[get("/{id}")]
-async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Responder> {
+#[has_any_role["Role::Manager", "Role::Nurse", type = "Role"]]
+async fn get(id: web::Path<i64>, pool: web::Data<DbPool>, auth: Auth) -> Result<impl Responder> {
     let p2 = pool.clone();
+
+    if auth.role == Role::Nurse && auth.id != *id {
+        return Err(actix_web::error::ErrorForbidden("").into());
+    }
 
     let nurse: Nurse = macros::get!(nurses, pool, *id, users, addresses);
 
@@ -117,10 +132,18 @@ async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Respond
         (status = 200),
         (status = 400, body = JsonError),
     ),
-    tag = "nurses"
+    tag = "nurses",
+    security(
+        ("token" = ["manager"])
+    )
 )]
 #[post("")]
-async fn post(new_record: web::Json<NewNurse>, pool: web::Data<DbPool>) -> Result<impl Responder> {
+#[has_roles("Role::Manager", type = "Role")]
+async fn post(
+    new_record: web::Json<NewNurse>,
+    pool: web::Data<DbPool>,
+    _: Auth,
+) -> Result<impl Responder> {
     web::block(move || {
         insert_into(nurses::table)
             .values(&new_record.0)
@@ -138,14 +161,23 @@ async fn post(new_record: web::Json<NewNurse>, pool: web::Data<DbPool>) -> Resul
         (status = 400, body = JsonError),
         (status = 404, body = JsonError),
     ),
-    tag = "nurses"
+    tag = "nurses",
+    security(
+        ("token" = ["manager", "nurse"])
+    )
 )]
 #[put("/{id}")]
+#[has_any_role["Role::Manager", "Role::Nurse", type = "Role"]]
 async fn put(
     id: web::Path<i64>,
     update_record: web::Json<UpdateNurse>,
     pool: web::Data<DbPool>,
+    auth: Auth,
 ) -> Result<impl Responder> {
+    if auth.role == Role::Nurse && auth.id != *id {
+        return Err(actix_web::error::ErrorForbidden("").into());
+    }
+
     web::block(move || {
         diesel::update(nurses::table)
             .set(&update_record.0)
@@ -166,7 +198,8 @@ async fn put(
     tag = "nurses"
 )]
 #[delete("/{id}")]
-async fn delete(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Responder> {
+
+async fn delete(id: web::Path<i64>, pool: web::Data<DbPool>, _: Auth) -> Result<impl Responder> {
     macros::delete!(nurses, pool, *id);
 
     Ok(Json(()))
@@ -178,13 +211,18 @@ async fn delete(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Resp
     responses(
         (status = 200, description = "Paginated list of availabilities from the given nurse", body = PaginatedAvailabilities),
     ),
-    tag = "nurses"
+    tag = "nurses",
+    security(
+        ("token" = ["manager", "nurse"])
+    )
 )]
 #[get("/{id}/availabilities")]
+#[has_any_role["Role::Manager", "Role::Nurse", type = "Role"]]
 async fn availabilities(
     query: web::Query<PaginationParam>,
     id: web::Path<i64>,
     pool: web::Data<DbPool>,
+    _: Auth,
 ) -> Result<impl Responder> {
     let res: Vec<Availability> = schema::availabilities::table
         .filter(schema::availabilities::id_nurse.eq(*id))

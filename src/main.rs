@@ -3,6 +3,7 @@ use actix_web::{
     web::{self, JsonConfig, QueryConfig, ServiceConfig},
     App, HttpResponse, HttpServer,
 };
+use actix_web_grants::GrantsMiddleware;
 use error::JsonError;
 use utoipa_redoc::{Redoc, Servable};
 
@@ -35,6 +36,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(Logger::new("\"%r\" -> %s in %D ms"))
             .wrap(NormalizePath::trim())
             .wrap(Compress::default())
+            .wrap(GrantsMiddleware::with_extractor(auth::extract_permissions))
             .service(Redoc::with_url("/doc", documentation::doc()))
             .service(
                 web::scope("/api")

@@ -3,10 +3,12 @@ use actix_web::{
     web::{self, Json},
     Responder, Scope,
 };
+use actix_web_grants::proc_macro::has_roles;
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 use macros::{list, total};
 
 use crate::{
+    auth::{Auth, Role},
     database::DbPool,
     error::{JsonError, Result},
     models::{Address, Center, CenterRecord},
@@ -23,7 +25,10 @@ use crate::{
         Address,
         crate::pagination::PaginatedCenters,
         JsonError
-    ))
+    )),
+    security(
+        ("token" = ["manager"])
+    )
 )]
 pub struct Doc;
 
@@ -40,9 +45,11 @@ pub fn routes() -> Scope {
     tag = "centers"
 )]
 #[get("")]
+#[has_roles("Role::Manager", type = "Role")]
 async fn all(
     query: web::Query<PaginationParam>,
     pool: web::Data<DbPool>,
+    _: Auth,
 ) -> Result<impl Responder> {
     let q2 = query.clone();
     let p2 = pool.clone();
@@ -63,7 +70,8 @@ async fn all(
     tag = "centers"
 )]
 #[get("/{id}")]
-async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Responder> {
+#[has_roles("Role::Manager", type = "Role")]
+async fn get(id: web::Path<i64>, pool: web::Data<DbPool>, _: Auth) -> Result<impl Responder> {
     let res: Center = macros::get!(centers, pool, *id, addresses);
 
     Ok(Json(res))

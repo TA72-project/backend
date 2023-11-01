@@ -3,10 +3,12 @@ use actix_web::{
     web::{self, Json},
     Responder, Scope,
 };
+use actix_web_grants::proc_macro::has_roles;
 use diesel::{insert_into, ExpressionMethods, QueryDsl, RunQueryDsl};
 use macros::total;
 
 use crate::{
+    auth::{Auth, Role},
     database::DbPool,
     error::{JsonError, Result},
     models::*,
@@ -24,7 +26,10 @@ use crate::{
         NewMission,
         crate::pagination::PaginatedMissions,
         JsonError
-    ))
+    )),
+    security(
+        ("token" = ["manager"])
+    )
 )]
 pub struct Doc;
 
@@ -46,9 +51,11 @@ pub fn routes() -> Scope {
     tag = "missions"
 )]
 #[get("")]
+#[has_roles("Role::Manager", type = "Role")]
 async fn all(
     query: web::Query<PaginationParam>,
     pool: web::Data<DbPool>,
+    _: Auth,
 ) -> Result<impl Responder> {
     let q2 = query.clone();
     let p2 = pool.clone();
@@ -81,7 +88,8 @@ async fn all(
     tag = "missions"
 )]
 #[get("/{id}")]
-async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Responder> {
+#[has_roles("Role::Manager", type = "Role")]
+async fn get(id: web::Path<i64>, pool: web::Data<DbPool>, _: Auth) -> Result<impl Responder> {
     let res: Mission = actix_web::web::block(move || {
         missions::table
             .inner_join(mission_types::table)
@@ -108,7 +116,12 @@ async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Respond
     tag = "missions"
 )]
 #[post("")]
-async fn post(new_record: Json<NewMission>, pool: web::Data<DbPool>) -> Result<impl Responder> {
+#[has_roles("Role::Manager", type = "Role")]
+async fn post(
+    new_record: Json<NewMission>,
+    pool: web::Data<DbPool>,
+    _: Auth,
+) -> Result<impl Responder> {
     web::block(move || {
         insert_into(missions::table)
             .values(&new_record.0)
@@ -129,10 +142,12 @@ async fn post(new_record: Json<NewMission>, pool: web::Data<DbPool>) -> Result<i
     tag = "missions"
 )]
 #[put("/{id}")]
+#[has_roles("Role::Manager", type = "Role")]
 async fn put(
     id: web::Path<i64>,
     update_record: Json<UpdateMission>,
     pool: web::Data<DbPool>,
+    _: Auth,
 ) -> Result<impl Responder> {
     web::block(move || {
         diesel::update(missions::table)
@@ -154,7 +169,8 @@ async fn put(
     tag = "missions"
 )]
 #[delete("/{id}")]
-async fn delete(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Responder> {
+#[has_roles("Role::Manager", type = "Role")]
+async fn delete(id: web::Path<i64>, pool: web::Data<DbPool>, _: Auth) -> Result<impl Responder> {
     macros::delete!(missions, pool, *id);
 
     Ok(Json(()))

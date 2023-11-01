@@ -3,10 +3,12 @@ use actix_web::{
     web::{self, Json},
     Responder, Scope,
 };
+use actix_web_grants::proc_macro::{has_any_role, has_roles};
 use diesel::{insert_into, ExpressionMethods, QueryDsl, RunQueryDsl};
 use macros::{list, total};
 
 use crate::{
+    auth::{Auth, Role},
     database::DbPool,
     error::{JsonError, Result},
     models::{NewSkill, Skill, UpdateSkill},
@@ -42,12 +44,17 @@ pub fn routes() -> Scope {
     responses(
         (status = 200, description = "Paginated list of skills", body = PaginatedSkills),
     ),
-    tag = "skills"
+    tag = "skills",
+    security(
+        ("token" = ["manager", "nurse"])
+    )
 )]
 #[get("")]
+#[has_any_role("Role::Manager", "Role::Nurse", type = "Role")]
 async fn all(
     query: web::Query<PaginationParam>,
     pool: web::Data<DbPool>,
+    _: Auth,
 ) -> Result<impl Responder> {
     let q2 = query.clone();
     let p2 = pool.clone();
@@ -65,10 +72,14 @@ async fn all(
         (status = 200, body = Skill),
         (status = 404, body = JsonError),
     ),
-    tag = "skills"
+    tag = "skills",
+    security(
+        ("token" = ["manager"])
+    )
 )]
 #[get("/{id}")]
-async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Responder> {
+#[has_roles("Role::Manager", type = "Role")]
+async fn get(id: web::Path<i64>, pool: web::Data<DbPool>, _: Auth) -> Result<impl Responder> {
     let skill: Skill = macros::get!(skills, pool, *id);
 
     Ok(Json(skill))
@@ -80,10 +91,18 @@ async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Respond
         (status = 200),
         (status = 400, body = JsonError),
     ),
-    tag = "skills"
+    tag = "skills",
+    security(
+        ("token" = ["manager"])
+    )
 )]
 #[post("")]
-async fn post(new_skill: web::Json<NewSkill>, pool: web::Data<DbPool>) -> Result<impl Responder> {
+#[has_roles("Role::Manager", type = "Role")]
+async fn post(
+    new_skill: web::Json<NewSkill>,
+    pool: web::Data<DbPool>,
+    _: Auth,
+) -> Result<impl Responder> {
     web::block(move || {
         insert_into(skills::table)
             .values(&new_skill.0)
@@ -101,13 +120,18 @@ async fn post(new_skill: web::Json<NewSkill>, pool: web::Data<DbPool>) -> Result
         (status = 400, body = JsonError),
         (status = 404, body = JsonError),
     ),
-    tag = "skills"
+    tag = "skills",
+    security(
+        ("token" = ["manager"])
+    )
 )]
 #[put("/{id}")]
+#[has_roles("Role::Manager", type = "Role")]
 async fn put(
     id: web::Path<i64>,
     update_skill: web::Json<UpdateSkill>,
     pool: web::Data<DbPool>,
+    _: Auth,
 ) -> Result<impl Responder> {
     web::block(move || {
         diesel::update(skills::table)
@@ -126,10 +150,14 @@ async fn put(
         (status = 200),
         (status = 404, body = JsonError),
     ),
-    tag = "skills"
+    tag = "skills",
+    security(
+        ("token" = ["manager"])
+    )
 )]
 #[delete("/{id}")]
-async fn delete(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Responder> {
+#[has_roles("Role::Manager", type = "Role")]
+async fn delete(id: web::Path<i64>, pool: web::Data<DbPool>, _: Auth) -> Result<impl Responder> {
     macros::delete!(skills, pool, *id);
 
     Ok(Json(()))

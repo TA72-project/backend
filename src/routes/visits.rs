@@ -3,10 +3,12 @@ use actix_web::{
     web::{self, Json},
     Responder, Scope,
 };
+use actix_web_grants::proc_macro::{has_any_role, has_roles};
 use diesel::{insert_into, ExpressionMethods, QueryDsl, RunQueryDsl};
 use macros::total;
 
 use crate::{
+    auth::{Auth, Role},
     database::DbPool,
     error::{JsonError, Result},
     models::*,
@@ -43,12 +45,17 @@ pub fn routes() -> Scope {
     responses(
         (status = 200, description = "Paginated list of visits", body = PaginatedVisits),
     ),
-    tag = "visits"
+    tag = "visits",
+    security(
+        ("token" = ["manager"])
+    )
 )]
 #[get("")]
+#[has_roles("Role::Manager", type = "Role")]
 async fn all(
     query: web::Query<PaginationParam>,
     pool: web::Data<DbPool>,
+    _: Auth,
 ) -> Result<impl Responder> {
     let q2 = query.clone();
     let p2 = pool.clone();
@@ -79,10 +86,14 @@ async fn all(
         (status = 200, body = Visit),
         (status = 404, body = JsonError)
     ),
-    tag = "visits"
+    tag = "visits",
+    security(
+        ("token" = ["manager", "nurse"])
+    )
 )]
 #[get("/{id}")]
-async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Responder> {
+#[has_any_role("Role::Manager", "Role::Nurse", type = "Role")]
+async fn get(id: web::Path<i64>, pool: web::Data<DbPool>, _: Auth) -> Result<impl Responder> {
     let res: Visit = actix_web::web::block(move || {
         visits::table
             .inner_join(
@@ -107,10 +118,18 @@ async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Respond
         (status = 200),
         (status = 400, body = JsonError)
     ),
-    tag = "visits"
+    tag = "visits",
+    security(
+        ("token" = ["manager"])
+    )
 )]
 #[post("")]
-async fn post(new_record: Json<NewVisit>, pool: web::Data<DbPool>) -> Result<impl Responder> {
+#[has_roles("Role::Manager", type = "Role")]
+async fn post(
+    new_record: Json<NewVisit>,
+    pool: web::Data<DbPool>,
+    _: Auth,
+) -> Result<impl Responder> {
     web::block(move || {
         insert_into(visits::table)
             .values(&new_record.0)
@@ -128,13 +147,18 @@ async fn post(new_record: Json<NewVisit>, pool: web::Data<DbPool>) -> Result<imp
         (status = 400, body = JsonError),
         (status = 404, body = JsonError),
     ),
-    tag = "visits"
+    tag = "visits",
+    security(
+        ("token" = ["manager"])
+    )
 )]
 #[put("/{id}")]
+#[has_roles("Role::Manager", type = "Role")]
 async fn put(
     id: web::Path<i64>,
     update_record: Json<UpdateVisit>,
     pool: web::Data<DbPool>,
+    _: Auth,
 ) -> Result<impl Responder> {
     web::block(move || {
         diesel::update(visits::table)
@@ -153,10 +177,14 @@ async fn put(
         (status = 200),
         (status = 404, body = JsonError)
     ),
-    tag = "visits"
+    tag = "visits",
+    security(
+        ("token" = ["manager"])
+    )
 )]
 #[delete("/{id}")]
-async fn delete(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Responder> {
+#[has_roles("Role::Manager", type = "Role")]
+async fn delete(id: web::Path<i64>, pool: web::Data<DbPool>, _: Auth) -> Result<impl Responder> {
     macros::delete!(visits, pool, *id);
 
     Ok(Json(()))

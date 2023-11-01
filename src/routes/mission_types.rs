@@ -3,10 +3,12 @@ use actix_web::{
     web::{self, Json},
     Responder, Scope,
 };
+use actix_web_grants::proc_macro::has_roles;
 use diesel::{insert_into, ExpressionMethods, QueryDsl, RunQueryDsl};
 use macros::{list, total};
 
 use crate::{
+    auth::{Auth, Role},
     database::DbPool,
     error::{JsonError, Result},
     models::{MissionType, NewMissionType, UpdateMissionType},
@@ -23,7 +25,10 @@ use crate::{
         NewMissionType,
         crate::pagination::PaginatedMissionTypes,
         JsonError
-    ))
+    )),
+    security(
+        ("token" = ["manager"])
+    )
 )]
 pub struct Doc;
 
@@ -45,9 +50,11 @@ pub fn routes() -> Scope {
     tag = "mission_types"
 )]
 #[get("")]
+#[has_roles("Role::Manager", type = "Role")]
 async fn all(
     query: web::Query<PaginationParam>,
     pool: web::Data<DbPool>,
+    _: Auth,
 ) -> Result<impl Responder> {
     let q2 = query.clone();
     let p2 = pool.clone();
@@ -68,7 +75,8 @@ async fn all(
     tag = "mission_types"
 )]
 #[get("/{id}")]
-async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Responder> {
+#[has_roles("Role::Manager", type = "Role")]
+async fn get(id: web::Path<i64>, pool: web::Data<DbPool>, _: Auth) -> Result<impl Responder> {
     let res: MissionType = macros::get!(mission_types, pool, *id);
 
     Ok(Json(res))
@@ -83,9 +91,11 @@ async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Respond
     tag = "mission_types"
 )]
 #[post("")]
+#[has_roles("Role::Manager", type = "Role")]
 async fn post(
     new_mission_type: Json<NewMissionType>,
     pool: web::Data<DbPool>,
+    _: Auth,
 ) -> Result<impl Responder> {
     web::block(move || {
         insert_into(mission_types::table)
@@ -107,10 +117,12 @@ async fn post(
     tag = "mission_types"
 )]
 #[put("/{id}")]
+#[has_roles("Role::Manager", type = "Role")]
 async fn put(
     id: web::Path<i64>,
     update_skill: Json<UpdateMissionType>,
     pool: web::Data<DbPool>,
+    _: Auth,
 ) -> Result<impl Responder> {
     web::block(move || {
         diesel::update(mission_types::table)
@@ -132,7 +144,8 @@ async fn put(
     tag = "mission_types"
 )]
 #[delete("/{id}")]
-async fn delete(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Responder> {
+#[has_roles("Role::Manager", type = "Role")]
+async fn delete(id: web::Path<i64>, pool: web::Data<DbPool>, _: Auth) -> Result<impl Responder> {
     macros::delete!(mission_types, pool, *id);
 
     Ok(Json(()))

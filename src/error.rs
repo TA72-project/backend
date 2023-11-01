@@ -29,6 +29,8 @@ pub enum Error {
     Blocking(actix_web::error::BlockingError),
     /// Errors from [`jsonwebtoken`]
     JwtError(jsonwebtoken::errors::ErrorKind),
+    /// Errors from [`actix_web`]
+    ActixWeb(actix_web::Error),
 
     /// The auth token has not been provided
     TokenNotProvided,
@@ -42,6 +44,7 @@ impl Display for Error {
             Error::Blocking(err) => err.fmt(f),
             Error::JwtError(err) => std::fmt::Debug::fmt(&err, f),
             Error::TokenNotProvided => write!(f, "Token not provided"),
+            Error::ActixWeb(err) => err.fmt(f),
         }
     }
 }
@@ -51,6 +54,7 @@ impl ResponseError for Error {
         match self {
             Error::Diesel(diesel::result::Error::NotFound) => StatusCode::NOT_FOUND,
             Error::TokenNotProvided | Error::JwtError(_) => StatusCode::UNAUTHORIZED,
+            Error::ActixWeb(err) => err.error_response().status(),
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
@@ -59,7 +63,8 @@ impl ResponseError for Error {
         let message = match self {
             Error::Diesel(diesel::result::Error::NotFound)
             | Error::TokenNotProvided
-            | Error::JwtError(_) => self.to_string(),
+            | Error::JwtError(_)
+            | Error::ActixWeb(_) => self.to_string(),
             #[cfg(debug_assertions)]
             _ => self.to_string(),
             #[cfg(not(debug_assertions))]
@@ -91,5 +96,11 @@ impl From<actix_web::error::BlockingError> for Error {
 impl From<jsonwebtoken::errors::Error> for Error {
     fn from(value: jsonwebtoken::errors::Error) -> Self {
         Self::JwtError(value.into_kind())
+    }
+}
+
+impl From<actix_web::Error> for Error {
+    fn from(value: actix_web::Error) -> Self {
+        Self::ActixWeb(value)
     }
 }

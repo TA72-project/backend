@@ -3,10 +3,12 @@ use actix_web::{
     web::{self, Json},
     Responder, Scope,
 };
+use actix_web_grants::proc_macro::has_roles;
 use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
 use macros::{list, total};
 
 use crate::{
+    auth::{Auth, Role},
     database::DbPool,
     error::{JsonError, Result},
     models::*,
@@ -23,7 +25,10 @@ use crate::{
         User,
         crate::pagination::PaginatedManagers,
         JsonError
-    ))
+    )),
+    security(
+        ("token" = ["manager"])
+    )
 )]
 pub struct Doc;
 
@@ -43,9 +48,11 @@ pub fn routes() -> Scope {
     tag = "managers"
 )]
 #[get("")]
+#[has_roles("Role::Manager", type = "Role")]
 async fn all(
     query: web::Query<PaginationParam>,
     pool: web::Data<DbPool>,
+    _: Auth,
 ) -> Result<impl Responder> {
     let q2 = query.clone();
     let p2 = pool.clone();
@@ -66,7 +73,8 @@ async fn all(
     tag = "managers"
 )]
 #[get("/{id}")]
-async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Responder> {
+#[has_roles("Role::Manager", type = "Role")]
+async fn get(id: web::Path<i64>, pool: web::Data<DbPool>, _: Auth) -> Result<impl Responder> {
     let res: Manager = macros::get!(managers, pool, *id, users);
 
     Ok(Json(res))
@@ -81,7 +89,8 @@ async fn get(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Respond
     tag = "managers"
 )]
 #[delete("/{id}")]
-async fn delete(id: web::Path<i64>, pool: web::Data<DbPool>) -> Result<impl Responder> {
+#[has_roles("Role::Manager", type = "Role")]
+async fn delete(id: web::Path<i64>, pool: web::Data<DbPool>, _: Auth) -> Result<impl Responder> {
     macros::delete!(managers, pool, *id);
 
     Ok(Json(()))

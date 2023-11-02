@@ -1,4 +1,3 @@
-use chrono::NaiveDateTime;
 use diesel::{Identifiable, Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -15,11 +14,8 @@ pub struct User {
     mail: String,
     phone: Option<String>,
     #[serde(skip)]
+    #[allow(dead_code)]
     password: Option<String>,
-    #[serde(skip)]
-    token: Option<String>,
-    #[serde(skip)]
-    token_gentime: Option<NaiveDateTime>,
     id_center: i64,
 }
 

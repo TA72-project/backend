@@ -10,7 +10,7 @@ use diesel::{ExpressionMethods, OptionalExtension, QueryDsl, RunQueryDsl};
 
 use crate::{
     auth::{self, Auth},
-    database::DbPool,
+    database::{crypt, DbPool},
     error::{JsonError, Result},
     models::LoginUser,
     schema::{managers, nurses, users},
@@ -35,10 +35,12 @@ pub fn routes() -> Scope {
 )]
 #[post("/login")]
 pub async fn login(pool: web::Data<DbPool>, user: Json<LoginUser>) -> Result<impl Responder> {
+    let user = user.into_inner();
+
     let id_user: i64 = users::table
         .select(users::id)
-        .filter(users::mail.eq(&*user.mail))
-        .filter(users::password.eq(&*user.password))
+        .filter(users::mail.eq(user.mail))
+        .filter(users::password.eq(crypt(user.password, users::password)))
         .first(&mut pool.get()?)?;
 
     let nurse: Option<i64> = nurses::table

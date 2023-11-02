@@ -3,6 +3,8 @@
 use diesel::{
     migration::MigrationVersion,
     r2d2::{self},
+    sql_function,
+    sql_types::{Nullable, Text},
     PgConnection,
 };
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
@@ -33,3 +35,21 @@ pub fn run_migrations<DB: diesel::backend::Backend>(
 ) -> diesel::migration::Result<Vec<MigrationVersion>> {
     con.run_pending_migrations(MIGRATIONS)
 }
+
+sql_function!(
+    /// See [the PostgreSQL crypt documentation](https://www.postgresql.org/docs/current/pgcrypto.html#PGCRYPTO-PASSWORD-HASHING-FUNCS-CRYPT)
+    ///
+    /// The parameters and return are not really `Nullable<Text>` but rather `Text`.
+    /// This is done in order to be compatible the the `password` field in database which *is*
+    /// nullable.
+    fn crypt(password: Text, salt: Nullable<Text>) -> Nullable<Text>
+);
+
+sql_function!(
+    /// See [the PostgreSQL gen_salt documentation](https://www.postgresql.org/docs/current/pgcrypto.html#PGCRYPTO-PASSWORD-HASHING-FUNCS-GEN-SALT)
+    ///
+    /// The return is not really a `Nullable<Text>` but rather a `Text`.
+    /// This is done in order to be compatible the the `password` field in database which *is*
+    /// nullable.
+    fn gen_salt(r#type: Text) -> Nullable<Text>
+);

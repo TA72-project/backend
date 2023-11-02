@@ -5,6 +5,7 @@
 mod addresses;
 mod availabilities;
 mod centers;
+mod l_missions_skills;
 mod l_nurses_skills;
 mod l_visits_nurses;
 mod managers;
@@ -19,6 +20,7 @@ mod visits;
 pub use addresses::*;
 pub use availabilities::*;
 pub use centers::*;
+pub use l_missions_skills::*;
 pub use l_nurses_skills::*;
 pub use l_visits_nurses::*;
 pub use managers::*;

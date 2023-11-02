@@ -22,6 +22,8 @@ pub struct MissionRecord {
     recurrence_days: Option<i16>,
     /// Number of people required to execute this mission
     people_required: i16,
+    /// Mission duration in minutes
+    minutes_duration: i32,
     /// ID of the type of mission
     id_mission_type: i64,
     /// ID of the patient related to this mission
@@ -54,6 +56,8 @@ pub struct UpdateMission {
     recurrence_days: Option<Option<i16>>,
     /// Number of people required to execute this mission
     people_required: Option<i16>,
+    /// Mission duration in minutes
+    minutes_duration: Option<i32>,
     /// ID of the type of mission
     id_mission_type: Option<i64>,
 }
@@ -73,6 +77,8 @@ pub struct NewMission {
     recurrence_days: Option<i16>,
     /// Number of people required to execute this mission, defaults to `1`
     people_required: Option<i16>,
+    /// Mission duration in minutes
+    minutes_duration: i32,
     /// ID of the type of mission
     id_mission_type: i64,
     /// ID of the patient related to this mission

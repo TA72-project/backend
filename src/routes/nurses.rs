@@ -198,7 +198,7 @@ async fn put(
     tag = "nurses"
 )]
 #[delete("/{id}")]
-
+#[has_roles("Role::Manager", type = "Role")]
 async fn delete(id: web::Path<i64>, pool: web::Data<DbPool>, _: Auth) -> Result<impl Responder> {
     macros::delete!(nurses, pool, *id);
 

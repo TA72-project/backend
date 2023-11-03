@@ -24,6 +24,7 @@ use crate::{
         PatientRecord,
         UpdatePatient,
         NewPatientRecord,
+        NewPatient,
         User,
         Address,
         crate::pagination::PaginatedPatients,

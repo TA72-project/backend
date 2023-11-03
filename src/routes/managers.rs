@@ -18,11 +18,12 @@ use crate::{
 
 #[derive(utoipa::OpenApi)]
 #[openapi(
-    paths(all, get, delete),
+    paths(all, get, post, delete),
     components(schemas(
         ManagerRecord,
         Manager,
         User,
+        NewUser,
         crate::pagination::PaginatedManagers,
         JsonError
     )),
@@ -36,6 +37,7 @@ pub fn routes() -> Scope {
     web::scope("/managers")
         .service(all)
         .service(get)
+        .service(post)
         .service(delete)
 }
 

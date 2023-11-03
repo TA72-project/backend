@@ -2,7 +2,7 @@ use diesel::{AsChangeset, Insertable, Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use super::{Address, User};
+use super::{Address, NewAddress, NewUser, User};
 use crate::schema::patients;
 
 #[derive(Serialize, Queryable, Selectable, ToSchema)]
@@ -35,7 +35,14 @@ pub struct UpdatePatient {
 
 #[derive(Deserialize, Insertable, ToSchema)]
 #[diesel(table_name = patients)]
+pub struct NewPatientRecord {
+    pub id_user: i64,
+    pub id_address: i64,
+}
+
+#[derive(Deserialize, ToSchema)]
 pub struct NewPatient {
-    id_user: i64,
-    id_address: i64,
+    #[serde(flatten)]
+    pub user: NewUser,
+    pub address: NewAddress,
 }

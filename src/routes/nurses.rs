@@ -30,8 +30,11 @@ use crate::{
         SkilledNurse,
         NurseRecord,
         UpdateNurse,
+        NewNurseRecord,
         NewNurse,
         User,
+        NewUser,
+        NewAddress,
         Availability,
         crate::pagination::PaginatedNurses,
         crate::pagination::PaginatedAvailabilities,
@@ -144,12 +147,33 @@ async fn post(
     pool: web::Data<DbPool>,
     _: Auth,
 ) -> Result<impl Responder> {
-    web::block(move || {
+    pool.get()?.build_transaction().run(|conn| {
+        let NewNurse {
+            nurse,
+            user,
+            address,
+        } = new_record.0;
+
+        let id_address: i64 = insert_into(addresses::table)
+            .values(&address)
+            .returning(addresses::id)
+            .get_result(conn)?;
+
+        let id_user: i64 = insert_into(users::table)
+            .values(&user)
+            .returning(users::id)
+            .get_result(conn)?;
+
         insert_into(nurses::table)
-            .values(&new_record.0)
-            .execute(&mut pool.get().unwrap())
-    })
-    .await??;
+            .values(NewNurseRecord {
+                id_user,
+                id_address,
+                ..nurse
+            })
+            .execute(conn)?;
+
+        Ok::<(), diesel::result::Error>(())
+    })?;
 
     Ok(Json(()))
 }

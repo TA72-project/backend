@@ -50,8 +50,22 @@ pub struct UpdateNurse {
     minutes_per_week: Option<i32>,
 }
 
-#[derive(Clone, Deserialize, Insertable, ToSchema)]
+#[derive(Insertable, Deserialize, ToSchema)]
 #[diesel(table_name = nurses)]
+pub struct NewNurseRecord {
+    /// Minutes of working time per week
+    pub minutes_per_week: i32,
+    #[serde(skip_deserializing)]
+    pub id_user: i64,
+    #[serde(skip_deserializing)]
+    pub id_address: i64,
+}
+
+#[derive(Deserialize, ToSchema)]
 pub struct NewNurse {
-    minutes_per_week: i32,
+    #[serde(flatten)]
+    pub nurse: NewNurseRecord,
+    #[serde(flatten)]
+    pub user: NewUser,
+    pub address: NewAddress,
 }

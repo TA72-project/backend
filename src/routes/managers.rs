@@ -99,7 +99,7 @@ async fn post(
 ) -> Result<impl Responder> {
     pool.get()?.build_transaction().run(|conn| {
         let id_user: i64 = insert_into(users::table)
-            .values(&new_record.0)
+            .values(new_record.0)
             .returning(users::id)
             .get_result(conn)?;
 

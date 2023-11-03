@@ -105,7 +105,7 @@ async fn post(
         let NewPatient { user, address } = new_record.0;
 
         let id_user: i64 = insert_into(users::table)
-            .values(&user)
+            .values(user)
             .returning(users::id)
             .get_result(conn)?;
 

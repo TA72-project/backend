@@ -160,7 +160,7 @@ async fn post(
             .get_result(conn)?;
 
         let id_user: i64 = insert_into(users::table)
-            .values(&user)
+            .values(user)
             .returning(users::id)
             .get_result(conn)?;
 

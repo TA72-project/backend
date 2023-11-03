@@ -23,6 +23,7 @@ use crate::{
         Patient,
         PatientRecord,
         UpdatePatient,
+        NewPatientRecord,
         NewPatient,
         User,
         Address,
@@ -100,12 +101,28 @@ async fn post(
     pool: web::Data<DbPool>,
     _: Auth,
 ) -> Result<impl Responder> {
-    web::block(move || {
+    pool.get()?.build_transaction().run(|conn| {
+        let NewPatient { user, address } = new_record.0;
+
+        let id_user: i64 = insert_into(users::table)
+            .values(user)
+            .returning(users::id)
+            .get_result(conn)?;
+
+        let id_address: i64 = insert_into(addresses::table)
+            .values(&address)
+            .returning(addresses::id)
+            .get_result(conn)?;
+
         insert_into(patients::table)
-            .values(&new_record.0)
-            .execute(&mut pool.get().unwrap())
-    })
-    .await??;
+            .values(NewPatientRecord {
+                id_user,
+                id_address,
+            })
+            .execute(conn)?;
+
+        Ok::<(), diesel::result::Error>(())
+    })?;
 
     Ok(Json(()))
 }

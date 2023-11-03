@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
-use diesel::{Identifiable, Queryable, Selectable};
-use serde::Serialize;
+use diesel::{Identifiable, Insertable, Queryable, Selectable};
+use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::schema::addresses;
@@ -33,4 +33,16 @@ impl Display for Address {
             self.city_name,
         )
     }
+}
+
+#[derive(Deserialize, Insertable, ToSchema)]
+#[diesel(table_name = addresses)]
+pub struct NewAddress {
+    /// Street number
+    number: Option<i32>,
+    street_name: String,
+    postcode: String,
+    city_name: String,
+    /// Address complement
+    complement: Option<String>,
 }

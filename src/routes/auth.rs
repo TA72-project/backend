@@ -9,7 +9,7 @@ use actix_web::{
 use diesel::{ExpressionMethods, OptionalExtension, QueryDsl, RunQueryDsl};
 
 use crate::{
-    auth::{self, Auth},
+    auth::{self, Auth, Role},
     database::{crypt, DbPool},
     error::{JsonError, Result},
     models::LoginUser,
@@ -44,22 +44,25 @@ pub async fn login(pool: web::Data<DbPool>, user: Json<LoginUser>) -> Result<imp
         .first(&mut pool.get()?)?;
 
     let nurse: Option<i64> = nurses::table
-        .find(id_user)
+        .filter(nurses::id_user.eq(id_user))
         .select(nurses::id)
         .first(&mut pool.get()?)
         .optional()?;
 
-    let id = if let Some(id_nurse) = nurse {
-        id_nurse
+    let (id, role) = if let Some(id_nurse) = nurse {
+        (id_nurse, Role::Nurse)
     } else {
-        managers::table
-            .find(id_user)
-            .select(managers::id)
-            .first::<i64>(&mut pool.get()?)?
+        (
+            managers::table
+                .filter(managers::id_user.eq(id_user))
+                .select(managers::id)
+                .first::<i64>(&mut pool.get()?)?,
+            Role::Manager,
+        )
     };
 
     Ok(HttpResponseBuilder::new(StatusCode::OK)
-        .cookie(Auth::new(id, auth::Role::Nurse).try_into()?)
+        .cookie(Auth::new(id, role).try_into()?)
         .finish())
 }
 

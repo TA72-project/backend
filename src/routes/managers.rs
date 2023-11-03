@@ -1,10 +1,10 @@
 use actix_web::{
-    delete, get,
+    delete, get, post,
     web::{self, Json},
     Responder, Scope,
 };
 use actix_web_grants::proc_macro::has_roles;
-use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl};
+use diesel::{insert_into, ExpressionMethods, QueryDsl, RunQueryDsl};
 use macros::{list, total};
 
 use crate::{
@@ -18,11 +18,12 @@ use crate::{
 
 #[derive(utoipa::OpenApi)]
 #[openapi(
-    paths(all, get, delete),
+    paths(all, get, post, delete),
     components(schemas(
         ManagerRecord,
         Manager,
         User,
+        NewUser,
         crate::pagination::PaginatedManagers,
         JsonError
     )),
@@ -36,6 +37,7 @@ pub fn routes() -> Scope {
     web::scope("/managers")
         .service(all)
         .service(get)
+        .service(post)
         .service(delete)
 }
 
@@ -78,6 +80,37 @@ async fn get(id: web::Path<i64>, pool: web::Data<DbPool>, _: Auth) -> Result<imp
     let res: Manager = macros::get!(managers, pool, *id, users);
 
     Ok(Json(res))
+}
+
+#[utoipa::path(
+    path = "/managers",
+    responses(
+        (status = 200),
+        (status = 400, body = JsonError),
+    ),
+    tag = "managers"
+)]
+#[post("")]
+#[has_roles("Role::Manager", type = "Role")]
+async fn post(
+    new_record: Json<NewUser>,
+    pool: web::Data<DbPool>,
+    _: Auth,
+) -> Result<impl Responder> {
+    pool.get()?.build_transaction().run(|conn| {
+        let id_user: i64 = insert_into(users::table)
+            .values(new_record.0)
+            .returning(users::id)
+            .get_result(conn)?;
+
+        insert_into(managers::table)
+            .values(NewManagerRecord { id_user })
+            .execute(conn)?;
+
+        Ok::<(), diesel::result::Error>(())
+    })?;
+
+    Ok(Json(()))
 }
 
 #[utoipa::path(

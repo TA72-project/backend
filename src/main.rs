@@ -29,14 +29,19 @@ async fn main() -> std::io::Result<()> {
         .expect("Unable to run migrations");
 
     HttpServer::new(move || {
-        App::new()
+        let app = App::new()
             .configure(json_config)
             .configure(query_config)
             .app_data(web::Data::new(pool.clone()))
             .wrap(Logger::new("\"%r\" -> %s in %D ms"))
             .wrap(NormalizePath::trim())
             .wrap(Compress::default())
-            .wrap(GrantsMiddleware::with_extractor(auth::extract_permissions))
+            .wrap(GrantsMiddleware::with_extractor(auth::extract_permissions));
+
+        #[cfg(feature = "cors")]
+        let app = app.wrap(actix_cors::Cors::permissive());
+
+        let app = app
             .service(Redoc::with_url("/doc", documentation::doc()))
             .service(
                 web::scope("/api")
@@ -50,7 +55,9 @@ async fn main() -> std::io::Result<()> {
                     .service(managers::routes())
                     .service(routes::auth::routes())
                     .service(version::routes()),
-            )
+            );
+
+        app
     })
     .bind(("0.0.0.0", 8000))?
     .run()

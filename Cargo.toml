@@ -13,6 +13,8 @@ members = [
 ]
 
 [dependencies]
+# CORS handling
+actix-cors = { version = "0.6.4", optional = true }
 # Web framework
 actix-web = "4.4.0"
 # Permission framework
@@ -39,6 +41,8 @@ utoipa = { version = "4.0.0", features = ["actix_extras", "chrono", "preserve_or
 # OpenApi render
 utoipa-redoc = { version = "1.0.0", features = ["actix-web"] }
 
+[features]
+cors = ["dep:actix-cors"]
 
 [profile.release]
 strip = true

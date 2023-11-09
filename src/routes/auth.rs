@@ -1,6 +1,5 @@
 use actix_web::{
-    cookie::Cookie,
-    get,
+    cookie, get,
     http::StatusCode,
     post,
     web::{self, Json},
@@ -9,7 +8,7 @@ use actix_web::{
 use diesel::{ExpressionMethods, OptionalExtension, QueryDsl, RunQueryDsl};
 
 use crate::{
-    auth::{self, Auth, Role},
+    auth::{Auth, Role},
     database::{crypt, DbPool},
     error::{JsonError, Result},
     models::LoginUser,
@@ -80,6 +79,10 @@ pub async fn login(pool: web::Data<DbPool>, user: Json<LoginUser>) -> Result<imp
 #[get("/logout")]
 pub async fn logout(_: Auth) -> Result<impl Responder> {
     Ok(HttpResponseBuilder::new(StatusCode::OK)
-        .cookie(Cookie::new(auth::COOKIE_TOKEN_NAME, ""))
+        .cookie(
+            Auth::build_cookie("")
+                .expires(cookie::time::OffsetDateTime::UNIX_EPOCH)
+                .finish(),
+        )
         .finish())
 }

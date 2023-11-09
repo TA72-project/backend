@@ -1,4 +1,4 @@
-use std::future::Ready;
+use std::{borrow::Cow, future::Ready};
 
 use actix_web::{dev::ServiceRequest, FromRequest, HttpRequest};
 use chrono::{Duration, Utc};
@@ -38,24 +38,31 @@ impl Auth {
             role,
         }
     }
+
+    /// Builds the base of an authentication cookie.
+    pub fn build_cookie<'c, V>(value: V) -> actix_web::cookie::CookieBuilder<'c>
+    where
+        V: Into<Cow<'c, str>>,
+    {
+        actix_web::cookie::Cookie::build(COOKIE_TOKEN_NAME, value)
+            .path("/")
+            .secure(true)
+            .http_only(true)
+    }
 }
 
 impl TryFrom<Auth> for actix_web::cookie::Cookie<'_> {
     type Error = jsonwebtoken::errors::Error;
 
     fn try_from(value: Auth) -> std::result::Result<Self, Self::Error> {
-        use actix_web::cookie;
-
         let token = jsonwebtoken::encode(
             &jsonwebtoken::Header::default(),
             &value,
             &EncodingKey::from_secret(JWT_SECRET.as_bytes()),
         )?;
 
-        Ok(cookie::Cookie::build(COOKIE_TOKEN_NAME, token)
-            .max_age(cookie::time::Duration::hours(TOKEN_VALIDITY))
-            .secure(true)
-            .http_only(true)
+        Ok(Auth::build_cookie(token)
+            .max_age(actix_web::cookie::time::Duration::hours(TOKEN_VALIDITY))
             .finish())
     }
 }

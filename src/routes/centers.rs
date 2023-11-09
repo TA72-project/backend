@@ -11,18 +11,20 @@ use crate::{
     auth::{Auth, Role},
     database::DbPool,
     error::{JsonError, Result},
-    models::{Address, CenterRecord},
+    models::{Address, CenterRecord, ZoneRecord},
     pagination::{PaginatedResponse, PaginationParam},
-    schema::centers,
+    schema::{self, centers},
 };
 
 #[derive(utoipa::OpenApi)]
 #[openapi(
-    paths(all, get),
+    paths(all, get, zones),
     components(schemas(
         CenterRecord,
         Address,
+        ZoneRecord,
         crate::pagination::PaginatedCenters,
+        crate::pagination::PaginatedZones,
         JsonError
     )),
     security(
@@ -32,7 +34,10 @@ use crate::{
 pub struct Doc;
 
 pub fn routes() -> Scope {
-    web::scope("/centers").service(all).service(get)
+    web::scope("/centers")
+        .service(all)
+        .service(get)
+        .service(zones)
 }
 
 #[utoipa::path(
@@ -74,4 +79,37 @@ async fn get(id: web::Path<i64>, pool: web::Data<DbPool>, _: Auth) -> Result<imp
     let res: CenterRecord = macros::get!(centers, pool, *id);
 
     Ok(Json(res))
+}
+
+#[utoipa::path(
+    context_path = "/centers",
+    params(PaginationParam),
+    responses(
+        (status = 200, body = PaginatedZones),
+        (status = 404, body = JsonError)
+    ),
+    tag = "centers"
+)]
+#[get("/{id}/zones")]
+#[has_roles("Role::Manager", type = "Role")]
+async fn zones(
+    query: web::Query<PaginationParam>,
+    id: web::Path<i64>,
+    pool: web::Data<DbPool>,
+    _: Auth,
+) -> Result<impl Responder> {
+    let res: Vec<ZoneRecord> = schema::zones::table
+        .filter(schema::zones::id_center.eq(*id))
+        .limit(query.limit().into())
+        .offset(query.offset().into())
+        .load(&mut pool.get()?)?;
+
+    let total: i64 = schema::zones::table
+        .filter(schema::zones::id_center.eq(*id))
+        .count()
+        .get_result(&mut pool.get()?)?;
+
+    Ok(Json(
+        PaginatedResponse::new(res, &query).total(total as u32),
+    ))
 }

@@ -17,6 +17,7 @@ pub struct Address {
     city_name: String,
     /// Address complement
     complement: Option<String>,
+    id_zone: i64,
 }
 
 impl Display for Address {
@@ -45,4 +46,5 @@ pub struct NewAddress {
     city_name: String,
     /// Address complement
     complement: Option<String>,
+    id_zone: i64,
 }

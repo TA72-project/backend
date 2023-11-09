@@ -11,7 +11,6 @@ use crate::{
 
 #[derive(Clone, Serialize, Queryable, Identifiable, Selectable, ToSchema)]
 #[diesel(table_name = users)]
-#[diesel(belongs_to(Center, foreign_key = id_center))]
 pub struct User {
     id: i64,
     pub fname: String,
@@ -21,7 +20,6 @@ pub struct User {
     #[serde(skip)]
     #[allow(dead_code)]
     password: Option<String>,
-    id_center: i64,
 }
 
 #[derive(Deserialize, ToSchema)]
@@ -31,7 +29,6 @@ pub struct NewUser {
     mail: String,
     phone: Option<String>,
     password: String,
-    id_center: i64,
 }
 
 /// Implements [`Insertable`] in such a way that the password is always and automatically hashed.
@@ -47,7 +44,6 @@ impl Insertable<users::table> for NewUser {
                 crypt::HelperType<String, gen_salt::HelperType<String>>,
             >,
         >,
-        Option<diesel::dsl::Eq<users::id_center, i64>>,
     ) as Insertable<users::table>>::Values;
 
     fn values(self) -> Self::Values {
@@ -57,7 +53,6 @@ impl Insertable<users::table> for NewUser {
             Some(users::mail.eq(self.mail)),
             self.phone.map(|x| users::phone.eq(x)),
             Some(users::password.eq(crypt(self.password, gen_salt(String::from("bf"))))),
-            Some(users::id_center.eq(self.id_center)),
         )
             .values()
     }

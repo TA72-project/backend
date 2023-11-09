@@ -2,13 +2,14 @@ use diesel::{Insertable, Queryable};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use super::User;
+use super::{NewUser, User};
 use crate::schema::managers;
 
 #[derive(Serialize, Queryable, ToSchema)]
 pub struct ManagerRecord {
     id: i64,
     id_user: i64,
+    id_center: i64,
 }
 
 #[derive(Serialize, Queryable, ToSchema)]
@@ -23,4 +24,13 @@ pub struct Manager {
 #[diesel(table_name = managers)]
 pub struct NewManagerRecord {
     pub id_user: i64,
+    pub id_center: i64,
+}
+
+#[derive(Deserialize, ToSchema)]
+pub struct NewManager {
+    #[serde(flatten)]
+    pub manager: NewManagerRecord,
+    #[serde(flatten)]
+    pub user: NewUser,
 }

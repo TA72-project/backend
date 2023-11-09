@@ -1,14 +1,10 @@
 use chrono::NaiveTime;
-use diesel::{Associations, Queryable};
+use diesel::Queryable;
 use serde::Serialize;
 use utoipa::ToSchema;
 
-use super::Address;
-use crate::schema::centers;
-
-#[derive(Clone, Serialize, Queryable, Associations, ToSchema)]
+#[derive(Clone, Serialize, Queryable, ToSchema)]
 #[diesel(table_name = centers)]
-#[diesel(belongs_to(Address, foreign_key = id_address))]
 pub struct CenterRecord {
     id: i64,
     name: String,
@@ -17,14 +13,4 @@ pub struct CenterRecord {
     workday_start: NaiveTime,
     /// The time the center stops working
     workday_end: NaiveTime,
-    /// The maximum range the center can operate at
-    range_km: i16,
-    id_address: i64,
-}
-
-#[derive(Clone, Serialize, Queryable, ToSchema)]
-pub struct Center {
-    #[serde(flatten)]
-    center: CenterRecord,
-    address: Address,
 }

@@ -41,8 +41,7 @@ async fn main() -> std::io::Result<()> {
         #[cfg(feature = "cors")]
         let app = app.wrap(actix_cors::Cors::permissive());
 
-        let app = app
-            .service(Redoc::with_url("/doc", documentation::doc()))
+        app.service(Redoc::with_url("/doc", documentation::doc()))
             .service(
                 web::scope("/api")
                     .service(skills::routes())
@@ -55,9 +54,7 @@ async fn main() -> std::io::Result<()> {
                     .service(managers::routes())
                     .service(routes::auth::routes())
                     .service(version::routes()),
-            );
-
-        app
+            )
     })
     .bind(("0.0.0.0", 8000))?
     .run()

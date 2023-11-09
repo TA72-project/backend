@@ -18,7 +18,7 @@ use crate::{
 
 #[derive(utoipa::OpenApi)]
 #[openapi(
-    paths(all, get, post, delete),
+    paths(all, me, get, post, delete),
     components(schemas(
         ManagerRecord,
         Manager,
@@ -36,6 +36,7 @@ pub struct Doc;
 pub fn routes() -> Scope {
     web::scope("/managers")
         .service(all)
+        .service(me)
         .service(get)
         .service(post)
         .service(delete)
@@ -64,6 +65,21 @@ async fn all(
     let total = total!(managers, p2);
 
     Ok(Json(PaginatedResponse::new(res, &q2).total(total)))
+}
+
+#[utoipa::path(
+    context_path = "/managers",
+    responses(
+        (status = 200, body = Manager),
+    ),
+    tag = "managers"
+)]
+#[get("/me")]
+#[has_roles("Role::Manager", type = "Role")]
+async fn me(pool: web::Data<DbPool>, auth: Auth) -> Result<impl Responder> {
+    let res: Manager = macros::get!(managers, pool, auth.id, users);
+
+    Ok(Json(res))
 }
 
 #[utoipa::path(

@@ -24,7 +24,7 @@ use crate::{
 
 #[derive(utoipa::OpenApi)]
 #[openapi(
-    paths(all, get, post, put, delete, availabilities, ical),
+    paths(all, get, me, post, put, delete, availabilities, ical),
     components(schemas(
         Nurse,
         SkilledNurse,
@@ -46,6 +46,7 @@ pub struct Doc;
 pub fn routes() -> Scope {
     web::scope("/nurses")
         .service(all)
+        .service(me)
         .service(get)
         .service(post)
         .service(put)
@@ -95,6 +96,33 @@ async fn all(
         .collect();
 
     Ok(Json(PaginatedResponse::new(res, &q2).total(total as u32)))
+}
+
+#[utoipa::path(
+    context_path = "/nurses",
+    responses(
+        (status = 200, body = SkilledNurse),
+    ),
+    tag = "nurses",
+    security(
+        ("token" = ["nurse"])
+    )
+)]
+#[get("/me")]
+#[has_any_role["Role::Nurse", type = "Role"]]
+async fn me(pool: web::Data<DbPool>, auth: Auth) -> Result<impl Responder> {
+    let p2 = pool.clone();
+
+    let nurse: Nurse = macros::get!(nurses, pool, auth.id, users, addresses);
+
+    let skills: Vec<Skill> = LNurseSkill::belonging_to(&nurse.nurse)
+        .inner_join(skills::table)
+        .select(skills::all_columns)
+        .load(&mut p2.get()?)?;
+
+    let res = SkilledNurse { nurse, skills };
+
+    Ok(Json(res))
 }
 
 #[utoipa::path(

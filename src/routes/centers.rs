@@ -11,16 +11,15 @@ use crate::{
     auth::{Auth, Role},
     database::DbPool,
     error::{JsonError, Result},
-    models::{Address, Center, CenterRecord},
+    models::{Address, CenterRecord},
     pagination::{PaginatedResponse, PaginationParam},
-    schema::{addresses, centers},
+    schema::centers,
 };
 
 #[derive(utoipa::OpenApi)]
 #[openapi(
     paths(all, get),
     components(schemas(
-        Center,
         CenterRecord,
         Address,
         crate::pagination::PaginatedCenters,
@@ -54,7 +53,7 @@ async fn all(
     let q2 = query.clone();
     let p2 = pool.clone();
 
-    let res: Vec<Center> = list!(centers, pool, query, addresses);
+    let res: Vec<CenterRecord> = list!(centers, pool, query);
 
     let total = total!(centers, p2);
 
@@ -64,7 +63,7 @@ async fn all(
 #[utoipa::path(
     context_path = "/centers",
     responses(
-        (status = 200, body = Center),
+        (status = 200, body = CenterRecord),
         (status = 404, body = JsonError)
     ),
     tag = "centers"
@@ -72,7 +71,7 @@ async fn all(
 #[get("/{id}")]
 #[has_roles("Role::Manager", type = "Role")]
 async fn get(id: web::Path<i64>, pool: web::Data<DbPool>, _: Auth) -> Result<impl Responder> {
-    let res: Center = macros::get!(centers, pool, *id, addresses);
+    let res: CenterRecord = macros::get!(centers, pool, *id);
 
     Ok(Json(res))
 }

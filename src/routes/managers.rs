@@ -23,6 +23,8 @@ use crate::{
         ManagerRecord,
         Manager,
         User,
+        NewManager,
+        NewManagerRecord,
         NewUser,
         crate::pagination::PaginatedManagers,
         JsonError
@@ -109,18 +111,20 @@ async fn get(id: web::Path<i64>, pool: web::Data<DbPool>, _: Auth) -> Result<imp
 #[post("")]
 #[has_roles("Role::Manager", type = "Role")]
 async fn post(
-    new_record: Json<NewUser>,
+    new_record: Json<NewManager>,
     pool: web::Data<DbPool>,
     _: Auth,
 ) -> Result<impl Responder> {
     pool.get()?.build_transaction().run(|conn| {
+        let NewManager { manager, user } = new_record.0;
+
         let id_user: i64 = insert_into(users::table)
-            .values(new_record.0)
+            .values(user)
             .returning(users::id)
             .get_result(conn)?;
 
         insert_into(managers::table)
-            .values(NewManagerRecord { id_user })
+            .values(NewManagerRecord { id_user, ..manager })
             .execute(conn)?;
 
         Ok::<(), diesel::result::Error>(())

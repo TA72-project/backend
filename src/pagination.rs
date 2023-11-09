@@ -48,7 +48,7 @@ impl PaginationParam {
 #[derive(Serialize, ToSchema)]
 #[aliases(
     PaginatedSkills = PaginatedResponse<Skill>,
-    PaginatedCenters = PaginatedResponse<Center>,
+    PaginatedCenters = PaginatedResponse<CenterRecord>,
     PaginatedMissionTypes = PaginatedResponse<MissionType>,
     PaginatedNurses = PaginatedResponse<SkilledNurse>,
     PaginatedPatients = PaginatedResponse<Patient>,
@@ -56,6 +56,7 @@ impl PaginationParam {
     PaginatedVisits = PaginatedResponse<Visit>,
     PaginatedManagers = PaginatedResponse<Manager>,
     PaginatedAvailabilities = PaginatedResponse<Availability>,
+    PaginatedZones = PaginatedResponse<ZoneRecord>,
 )]
 pub struct PaginatedResponse<T: Serialize> {
     /// Paginated data

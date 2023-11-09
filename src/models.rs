@@ -16,6 +16,7 @@ mod patients;
 mod skills;
 mod users;
 mod visits;
+mod zones;
 
 pub use addresses::*;
 pub use availabilities::*;
@@ -31,3 +32,4 @@ pub use patients::*;
 pub use skills::*;
 pub use users::*;
 pub use visits::*;
+pub use zones::*;

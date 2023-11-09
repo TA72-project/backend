@@ -4,5 +4,6 @@ CREATE TABLE "addresses" (
   "street_name" text NOT NULL,
   "postcode" text NOT NULL,
   "city_name" text NOT NULL,
-  "complement" text
+  "complement" text,
+  "id_zone" bigint NOT NULL REFERENCES "zones" ("id")
 );

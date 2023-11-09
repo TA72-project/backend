@@ -4,7 +4,6 @@ CREATE TABLE "users" (
   "lname" text NOT NULL,
   "mail" text UNIQUE NOT NULL,
   "phone" text,
-  "password" text,
-  "id_center" bigint NOT NULL REFERENCES "centers" ("id")
+  "password" text
 );
 

@@ -1,6 +1,6 @@
-CREATE TABLE "managers" (
+CREATE TABLE "zones" (
   "id" bigserial PRIMARY KEY,
-  "id_user" bigint UNIQUE NOT NULL REFERENCES "users" ("id"),
+  "name" text NOT NULL,
   "id_center" bigint NOT NULL REFERENCES "centers" ("id")
 );
 

@@ -13,7 +13,7 @@ pub static TOKEN_VALIDITY: Hours = 4;
 pub static COOKIE_TOKEN_NAME: &str = "token";
 pub static JWT_SECRET: &str = "TODO SECRET";
 
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
 pub enum Role {
     Manager,
     Nurse,

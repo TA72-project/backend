@@ -62,7 +62,7 @@ pub async fn login(pool: web::Data<DbPool>, user: Json<LoginUser>) -> Result<imp
 
     Ok(HttpResponseBuilder::new(StatusCode::OK)
         .cookie(Auth::new(id, role).try_into()?)
-        .finish())
+        .json(role))
 }
 
 #[utoipa::path(

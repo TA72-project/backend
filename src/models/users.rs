@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::{
+    auth::Role,
     database::{crypt, gen_salt},
     schema::users,
 };
@@ -12,7 +13,7 @@ use crate::{
 #[derive(Clone, Serialize, Queryable, Identifiable, Selectable, ToSchema)]
 #[diesel(table_name = users)]
 pub struct User {
-    id: i64,
+    pub id: i64,
     pub fname: String,
     pub lname: String,
     mail: String,
@@ -20,6 +21,13 @@ pub struct User {
     #[serde(skip)]
     #[allow(dead_code)]
     password: Option<String>,
+}
+
+#[derive(Serialize, ToSchema)]
+pub struct RoledUser {
+    #[serde(flatten)]
+    pub user: User,
+    pub role: Role,
 }
 
 #[derive(Deserialize, ToSchema)]

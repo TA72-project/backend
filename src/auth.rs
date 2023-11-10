@@ -4,6 +4,7 @@ use actix_web::{dev::ServiceRequest, FromRequest, HttpRequest};
 use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, DecodingKey, EncodingKey, Validation};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 use crate::error::{Error, Result};
 
@@ -13,7 +14,7 @@ pub static TOKEN_VALIDITY: Hours = 4;
 pub static COOKIE_TOKEN_NAME: &str = "token";
 pub static JWT_SECRET: &str = "TODO SECRET";
 
-#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize, ToSchema)]
 pub enum Role {
     Manager,
     Nurse,

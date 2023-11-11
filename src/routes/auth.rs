@@ -11,12 +11,15 @@ use crate::{
     auth::{Auth, Role},
     database::{crypt, DbPool},
     error::{JsonError, Result},
-    models::LoginUser,
+    models::{LoginUser, RoledUser, User},
     schema::{managers, nurses, users},
 };
 
 #[derive(utoipa::OpenApi)]
-#[openapi(paths(login, logout), components(schemas(LoginUser, JsonError)))]
+#[openapi(
+    paths(login, logout),
+    components(schemas(LoginUser, Role, RoledUser, JsonError))
+)]
 pub struct Doc;
 
 pub fn routes() -> Scope {
@@ -26,7 +29,7 @@ pub fn routes() -> Scope {
 #[utoipa::path(
     context_path = "/auth",
     responses(
-        (status = 200),
+        (status = 200, body = RoledUser),
         (status = 401),
     ),
     tag = "auth",
@@ -36,14 +39,13 @@ pub fn routes() -> Scope {
 pub async fn login(pool: web::Data<DbPool>, user: Json<LoginUser>) -> Result<impl Responder> {
     let user = user.into_inner();
 
-    let id_user: i64 = users::table
-        .select(users::id)
+    let user: User = users::table
         .filter(users::mail.eq(user.mail))
         .filter(users::password.eq(crypt(user.password, users::password)))
         .first(&mut pool.get()?)?;
 
     let nurse: Option<i64> = nurses::table
-        .filter(nurses::id_user.eq(id_user))
+        .filter(nurses::id_user.eq(user.id))
         .select(nurses::id)
         .first(&mut pool.get()?)
         .optional()?;
@@ -53,7 +55,7 @@ pub async fn login(pool: web::Data<DbPool>, user: Json<LoginUser>) -> Result<imp
     } else {
         (
             managers::table
-                .filter(managers::id_user.eq(id_user))
+                .filter(managers::id_user.eq(user.id))
                 .select(managers::id)
                 .first::<i64>(&mut pool.get()?)?,
             Role::Manager,
@@ -62,7 +64,7 @@ pub async fn login(pool: web::Data<DbPool>, user: Json<LoginUser>) -> Result<imp
 
     Ok(HttpResponseBuilder::new(StatusCode::OK)
         .cookie(Auth::new(id, role).try_into()?)
-        .finish())
+        .json(RoledUser { user, role }))
 }
 
 #[utoipa::path(

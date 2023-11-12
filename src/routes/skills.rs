@@ -12,7 +12,7 @@ use crate::{
     error::{JsonError, Result},
     models::{NewSkill, Skill, UpdateSkill},
     pagination::{PaginatedResponse, PaginationParam},
-    params::SearchParam,
+    params::{SearchParam, SortParam},
     schema::skills,
 };
 
@@ -40,7 +40,7 @@ pub fn routes() -> Scope {
 
 #[utoipa::path(
     context_path = "/skills",
-    params(PaginationParam, SearchParam),
+    params(PaginationParam, SearchParam, SortParam),
     responses(
         (status = 200, description = "Paginated list of skills", body = PaginatedSkills),
     ),
@@ -54,11 +54,13 @@ pub fn routes() -> Scope {
 async fn all(
     pagination: web::Query<PaginationParam>,
     search: web::Query<SearchParam>,
+    sort: web::Query<SortParam>,
     pool: web::Data<DbPool>,
     _: Auth,
 ) -> Result<impl Responder> {
     let skills: Vec<Skill> = skills::table
         .filter(skills::name.ilike(search.value()))
+        .order(sort.raw_sql())
         .offset(pagination.offset().into())
         .limit(pagination.limit().into())
         .load(&mut pool.get()?)?;

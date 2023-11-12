@@ -1,5 +1,4 @@
 /// Holds the parameters a route can receive to sort data.
-
 use std::{
     fmt::{self, Display},
     str::FromStr,
@@ -160,8 +159,9 @@ impl<'de> de::Deserialize<'de> for SortParam {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use actix_web::web::Query;
+
+    use super::*;
 
     /// No query parameter should give default sort order
     #[test]

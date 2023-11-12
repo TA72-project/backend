@@ -69,7 +69,6 @@ impl SortParam {
     }
 
     /// Returns an sql statement usable by [`diesel::query_dsl::QueryDsl::order`].
-    #[must_use]
     pub fn raw_sql(&self) -> diesel::expression::SqlLiteral<diesel::sql_types::Text> {
         diesel::dsl::sql::<diesel::sql_types::Text>(&self.value())
     }

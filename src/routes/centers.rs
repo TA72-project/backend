@@ -91,7 +91,7 @@ async fn get(id: web::Path<i64>, pool: web::Data<DbPool>, _: Auth) -> Result<imp
 
 #[utoipa::path(
     context_path = "/centers",
-    params(PaginationParam),
+    params(PaginationParam, SearchParam),
     responses(
         (status = 200, body = PaginatedZones),
         (status = 404, body = JsonError)
@@ -101,23 +101,25 @@ async fn get(id: web::Path<i64>, pool: web::Data<DbPool>, _: Auth) -> Result<imp
 #[get("/{id}/zones")]
 #[has_roles("Role::Manager", type = "Role")]
 async fn zones(
-    query: web::Query<PaginationParam>,
+    pagination: web::Query<PaginationParam>,
+    search: web::Query<SearchParam>,
     id: web::Path<i64>,
     pool: web::Data<DbPool>,
     _: Auth,
 ) -> Result<impl Responder> {
-    let res: Vec<ZoneRecord> = schema::zones::table
+    let req = schema::zones::table
         .filter(schema::zones::id_center.eq(*id))
-        .limit(query.limit().into())
-        .offset(query.offset().into())
+        .filter(schema::zones::name.ilike(search.value()));
+
+    let res: Vec<ZoneRecord> = req
+        .clone()
+        .limit(pagination.limit().into())
+        .offset(pagination.offset().into())
         .load(&mut pool.get()?)?;
 
-    let total: i64 = schema::zones::table
-        .filter(schema::zones::id_center.eq(*id))
-        .count()
-        .get_result(&mut pool.get()?)?;
+    let total: i64 = req.count().get_result(&mut pool.get()?)?;
 
     Ok(Json(
-        PaginatedResponse::new(res, &query).total(total as u32),
+        PaginatedResponse::new(res, &pagination).total(total as u32),
     ))
 }

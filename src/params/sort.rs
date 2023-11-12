@@ -1,3 +1,5 @@
+/// Holds the parameters a route can receive to sort data.
+
 use std::{
     fmt::{self, Display},
     str::FromStr,
@@ -6,6 +8,7 @@ use std::{
 use serde::de;
 use utoipa::IntoParams;
 
+/// Direction in which to sort data.
 #[derive(Default, Debug, PartialEq, Eq, Clone)]
 enum OrderByDirection {
     #[default]
@@ -38,19 +41,34 @@ impl FromStr for OrderByDirection {
     }
 }
 
+/// Parameter to sort data.
+///
+/// `sort` is for the query while `col` and `direction` are the validated data.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SortParam {
+    /// Field and direction, `:` separated.
     sort: String,
+    /// Column to sort by.
     col: String,
+    /// Direction by which to sort.
     direction: OrderByDirection,
 }
 
 impl SortParam {
+    /// Returns the end of an `ORDER BY` statement.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let param = SortParam::default();
+    /// assert_eq(param.value(), "id asc");
+    /// ```
     #[must_use]
     pub fn value(&self) -> String {
         format!("{} {}", self.col, self.direction)
     }
 
+    /// Returns an sql statement usable by [`diesel::query_dsl::QueryDsl::order`].
     #[must_use]
     pub fn raw_sql(&self) -> diesel::expression::SqlLiteral<diesel::sql_types::Text> {
         diesel::dsl::sql::<diesel::sql_types::Text>(&self.value())

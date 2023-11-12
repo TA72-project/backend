@@ -4,8 +4,7 @@ use actix_web::{
     Responder, Scope,
 };
 use actix_web_grants::proc_macro::has_roles;
-use diesel::{insert_into, ExpressionMethods, QueryDsl, RunQueryDsl};
-use macros::{list, total};
+use diesel::{insert_into, ExpressionMethods, PgTextExpressionMethods, QueryDsl, RunQueryDsl};
 
 use crate::{
     auth::{Auth, Role},
@@ -13,6 +12,7 @@ use crate::{
     error::{JsonError, Result},
     models::*,
     pagination::{PaginatedResponse, PaginationParam},
+    params::SearchParam,
     schema::{managers, users},
 };
 
@@ -46,7 +46,7 @@ pub fn routes() -> Scope {
 
 #[utoipa::path(
     context_path = "/managers",
-    params(PaginationParam),
+    params(PaginationParam, SearchParam),
     responses(
         (status = 200, description = "Paginated list of managers", body = PaginatedManagers),
     ),
@@ -55,18 +55,28 @@ pub fn routes() -> Scope {
 #[get("")]
 #[has_roles("Role::Manager", type = "Role")]
 async fn all(
-    query: web::Query<PaginationParam>,
+    pagination: web::Query<PaginationParam>,
+    search: web::Query<SearchParam>,
     pool: web::Data<DbPool>,
     _: Auth,
 ) -> Result<impl Responder> {
-    let q2 = query.clone();
-    let p2 = pool.clone();
+    let pool = &mut pool.get()?;
 
-    let res: Vec<Manager> = list!(managers, pool, query, users);
+    let req = managers::table
+        .inner_join(users::table)
+        .filter(users::fname.ilike(search.value()))
+        .or_filter(users::lname.ilike(search.value()))
+        .or_filter(users::mail.ilike(search.value()));
 
-    let total = total!(managers, p2);
+    let res: Vec<Manager> = req
+        .clone()
+        .offset(pagination.offset().into())
+        .limit(pagination.limit().into())
+        .load(pool)?;
 
-    Ok(Json(PaginatedResponse::new(res, &q2).total(total)))
+    let total = req.count().get_result::<i64>(pool)? as u32;
+
+    Ok(Json(PaginatedResponse::new(res, &pagination).total(total)))
 }
 
 #[utoipa::path(

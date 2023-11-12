@@ -4,8 +4,7 @@ use actix_web::{
     Responder, Scope,
 };
 use actix_web_grants::proc_macro::{has_any_role, has_roles};
-use diesel::{insert_into, ExpressionMethods, QueryDsl, RunQueryDsl};
-use macros::{list, total};
+use diesel::{insert_into, ExpressionMethods, PgTextExpressionMethods, QueryDsl, RunQueryDsl};
 
 use crate::{
     auth::{Auth, Role},
@@ -13,6 +12,7 @@ use crate::{
     error::{JsonError, Result},
     models::{NewSkill, Skill, UpdateSkill},
     pagination::{PaginatedResponse, PaginationParam},
+    params::SearchParam,
     schema::skills,
 };
 
@@ -40,7 +40,7 @@ pub fn routes() -> Scope {
 
 #[utoipa::path(
     context_path = "/skills",
-    params(PaginationParam),
+    params(PaginationParam, SearchParam),
     responses(
         (status = 200, description = "Paginated list of skills", body = PaginatedSkills),
     ),
@@ -52,18 +52,25 @@ pub fn routes() -> Scope {
 #[get("")]
 #[has_any_role("Role::Manager", "Role::Nurse", type = "Role")]
 async fn all(
-    query: web::Query<PaginationParam>,
+    pagination: web::Query<PaginationParam>,
+    search: web::Query<SearchParam>,
     pool: web::Data<DbPool>,
     _: Auth,
 ) -> Result<impl Responder> {
-    let q2 = query.clone();
-    let p2 = pool.clone();
+    let skills: Vec<Skill> = skills::table
+        .filter(skills::name.ilike(search.value()))
+        .offset(pagination.offset().into())
+        .limit(pagination.limit().into())
+        .load(&mut pool.get()?)?;
 
-    let skills: Vec<Skill> = list!(skills, pool, query);
+    let total = skills::table
+        .filter(skills::name.ilike(search.value()))
+        .count()
+        .get_result::<i64>(&mut pool.get()?)? as u32;
 
-    let total = total!(skills, p2);
-
-    Ok(Json(PaginatedResponse::new(skills, &q2).total(total)))
+    Ok(Json(
+        PaginatedResponse::new(skills, &pagination).total(total),
+    ))
 }
 
 #[utoipa::path(

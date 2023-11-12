@@ -6,9 +6,8 @@ use actix_web::{
 use actix_web_grants::proc_macro::{has_any_role, has_roles};
 use diesel::{
     connection::DefaultLoadingMode, insert_into, BelongingToDsl, ExpressionMethods, GroupedBy,
-    QueryDsl, RunQueryDsl, SelectableHelper,
+    PgTextExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper,
 };
-use macros::{list, total};
 
 use crate::{
     auth::{Auth, Role},
@@ -16,6 +15,7 @@ use crate::{
     error::{JsonError, Result},
     models::*,
     pagination::{PaginatedResponse, PaginationParam},
+    params::SearchParam,
     schema::{
         self, addresses, l_visits_nurses, mission_types, missions, nurses, patients, skills, users,
         visits,
@@ -57,7 +57,7 @@ pub fn routes() -> Scope {
 
 #[utoipa::path(
     context_path = "/nurses",
-    params(PaginationParam),
+    params(PaginationParam, SearchParam),
     responses(
         (status = 200, description = "Paginated list of nurses", body = PaginatedNurses),
     ),
@@ -69,18 +69,32 @@ pub fn routes() -> Scope {
 #[get("")]
 #[has_roles("Role::Manager", type = "Role")]
 async fn all(
-    query: web::Query<PaginationParam>,
+    pagination: web::Query<PaginationParam>,
+    search: web::Query<SearchParam>,
     pool: web::Data<DbPool>,
     _: Auth,
 ) -> Result<impl Responder> {
-    let q2 = query.clone();
-    let p2 = pool.clone();
-    let p3 = pool.clone();
+    let pool = &mut pool.get()?;
 
     // Get nurses
-    let nurses: Vec<Nurse> = list!(nurses, pool, query, users, addresses);
+    let nurses: Vec<Nurse> = nurses::table
+        .inner_join(users::table)
+        .inner_join(addresses::table)
+        .filter(users::fname.ilike(search.value()))
+        .or_filter(users::lname.ilike(search.value()))
+        .or_filter(users::mail.ilike(search.value()))
+        .offset(pagination.offset().into())
+        .limit(pagination.limit().into())
+        .load(pool)?;
+
     // Get total of nurses
-    let total = total!(nurses, p2);
+    let total = nurses::table
+        .inner_join(users::table)
+        .filter(users::fname.ilike(search.value()))
+        .or_filter(users::lname.ilike(search.value()))
+        .or_filter(users::mail.ilike(search.value()))
+        .count()
+        .get_result::<i64>(pool)?;
 
     // Get database records
     let nurses_records: Vec<_> = nurses.iter().map(|n| n.nurse).collect();
@@ -88,14 +102,16 @@ async fn all(
     // Get skills and group by nurse
     let res = LNurseSkill::belonging_to(&nurses_records)
         .inner_join(skills::table)
-        .load::<(LNurseSkill, Skill)>(&mut p3.get()?)?
+        .load::<(LNurseSkill, Skill)>(pool)?
         .grouped_by(&nurses_records)
         .into_iter()
         .zip(nurses)
         .map(SkilledNurse::from)
         .collect();
 
-    Ok(Json(PaginatedResponse::new(res, &q2).total(total as u32)))
+    Ok(Json(
+        PaginatedResponse::new(res, &pagination).total(total as u32),
+    ))
 }
 
 #[utoipa::path(

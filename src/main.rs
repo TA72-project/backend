@@ -13,6 +13,7 @@ mod documentation;
 mod error;
 mod models;
 mod pagination;
+mod params;
 mod routes;
 mod schema;
 

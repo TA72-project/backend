@@ -13,6 +13,7 @@ use crate::{
     error::{JsonError, Result},
     models::*,
     pagination::{PaginatedResponse, PaginationParam},
+    params::SortParam,
     schema::{addresses, mission_types, missions, patients, users, visits},
 };
 
@@ -41,7 +42,7 @@ pub fn routes() -> Scope {
 
 #[utoipa::path(
     context_path = "/visits",
-    params(PaginationParam),
+    params(PaginationParam, SortParam),
     responses(
         (status = 200, description = "Paginated list of visits", body = PaginatedVisits),
     ),
@@ -54,6 +55,7 @@ pub fn routes() -> Scope {
 #[has_roles("Role::Manager", type = "Role")]
 async fn all(
     query: web::Query<PaginationParam>,
+    sort: web::Query<SortParam>,
     pool: web::Data<DbPool>,
     _: Auth,
 ) -> Result<impl Responder> {
@@ -69,6 +71,7 @@ async fn all(
                         .inner_join(addresses::table),
                 ),
             )
+            .order(sort.raw_sql())
             .offset(query.offset().into())
             .limit(query.limit().into())
             .load(&mut pool.get().unwrap())

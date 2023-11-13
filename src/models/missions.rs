@@ -1,3 +1,4 @@
+use backend_derive::HasColumn;
 use chrono::NaiveDateTime;
 use diesel::{AsChangeset, Insertable, Queryable, Selectable};
 use serde::{Deserialize, Serialize};
@@ -6,7 +7,7 @@ use utoipa::ToSchema;
 use super::{MissionType, Patient};
 use crate::schema::missions;
 
-#[derive(Serialize, Queryable, Selectable, ToSchema)]
+#[derive(Serialize, Queryable, Selectable, HasColumn, ToSchema)]
 #[diesel(table_name = missions)]
 pub struct MissionRecord {
     id: i64,

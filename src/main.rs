@@ -4,21 +4,11 @@ use actix_web::{
     App, HttpResponse, HttpServer,
 };
 use actix_web_grants::GrantsMiddleware;
-use error::JsonError;
-use utoipa_redoc::{Redoc, Servable};
-
-mod auth;
-mod database;
-mod documentation;
-mod error;
-mod models;
-mod pagination;
-mod params;
-mod routes;
-mod schema;
-
+use backend::*;
 use env_logger::Env;
+use error::JsonError;
 use routes::*;
+use utoipa_redoc::{Redoc, Servable};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -37,7 +27,9 @@ async fn main() -> std::io::Result<()> {
             .wrap(Logger::new("\"%r\" -> %s in %D ms"))
             .wrap(NormalizePath::trim())
             .wrap(Compress::default())
-            .wrap(GrantsMiddleware::with_extractor(auth::extract_permissions));
+            .wrap(GrantsMiddleware::with_extractor(
+                backend::auth::extract_permissions,
+            ));
 
         #[cfg(feature = "cors")]
         let app = app.wrap(actix_cors::Cors::permissive());

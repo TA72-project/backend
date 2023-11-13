@@ -1,9 +1,10 @@
+use backend_derive::HasColumn;
 use diesel::{Associations, Identifiable, Queryable, Selectable};
 
 use super::*;
 use crate::schema::l_nurses_skills;
 
-#[derive(Identifiable, Selectable, Queryable, Associations)]
+#[derive(Identifiable, Selectable, Queryable, HasColumn, Associations)]
 #[diesel(table_name = l_nurses_skills)]
 #[diesel(primary_key(id_nurse, id_skill))]
 #[diesel(belongs_to(NurseRecord, foreign_key = id_nurse))]

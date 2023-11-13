@@ -1,5 +1,6 @@
 use std::option::Option;
 
+use backend_derive::HasColumn;
 use diesel::{ExpressionMethods, Identifiable, Insertable, Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -10,7 +11,7 @@ use crate::{
     schema::users,
 };
 
-#[derive(Clone, Serialize, Queryable, Identifiable, Selectable, ToSchema)]
+#[derive(Clone, Serialize, Queryable, Identifiable, Selectable, HasColumn, ToSchema)]
 #[diesel(table_name = users)]
 pub struct User {
     pub id: i64,

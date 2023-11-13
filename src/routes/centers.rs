@@ -12,7 +12,7 @@ use crate::{
     error::{JsonError, Result},
     models::{Address, CenterRecord, ZoneRecord},
     pagination::{PaginatedResponse, PaginationParam},
-    params::SearchParam,
+    params::{SearchParam, SortParam},
     schema::{self, centers},
 };
 
@@ -42,7 +42,7 @@ pub fn routes() -> Scope {
 
 #[utoipa::path(
     context_path = "/centers",
-    params(PaginationParam, SearchParam),
+    params(PaginationParam, SearchParam, SortParam),
     responses(
         (status = 200, description = "Paginated list of centers", body = PaginatedCenters),
     ),
@@ -53,6 +53,7 @@ pub fn routes() -> Scope {
 async fn all(
     pagination: web::Query<PaginationParam>,
     search: web::Query<SearchParam>,
+    sort: web::Query<SortParam>,
     pool: web::Data<DbPool>,
     _: Auth,
 ) -> Result<impl Responder> {
@@ -62,6 +63,7 @@ async fn all(
 
     let res: Vec<CenterRecord> = req
         .clone()
+        .order(sort.raw_sql())
         .offset(pagination.offset().into())
         .limit(pagination.limit().into())
         .load(&mut pool.get()?)?;
@@ -91,7 +93,7 @@ async fn get(id: web::Path<i64>, pool: web::Data<DbPool>, _: Auth) -> Result<imp
 
 #[utoipa::path(
     context_path = "/centers",
-    params(PaginationParam, SearchParam),
+    params(PaginationParam, SearchParam, SortParam),
     responses(
         (status = 200, body = PaginatedZones),
         (status = 404, body = JsonError)
@@ -103,6 +105,7 @@ async fn get(id: web::Path<i64>, pool: web::Data<DbPool>, _: Auth) -> Result<imp
 async fn zones(
     pagination: web::Query<PaginationParam>,
     search: web::Query<SearchParam>,
+    sort: web::Query<SortParam>,
     id: web::Path<i64>,
     pool: web::Data<DbPool>,
     _: Auth,
@@ -113,6 +116,7 @@ async fn zones(
 
     let res: Vec<ZoneRecord> = req
         .clone()
+        .order(sort.raw_sql())
         .limit(pagination.limit().into())
         .offset(pagination.offset().into())
         .load(&mut pool.get()?)?;

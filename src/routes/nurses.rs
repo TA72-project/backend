@@ -15,7 +15,7 @@ use crate::{
     error::{JsonError, Result},
     models::*,
     pagination::{PaginatedResponse, PaginationParam},
-    params::SearchParam,
+    params::{SearchParam, SortParam},
     schema::{
         self, addresses, l_visits_nurses, mission_types, missions, nurses, patients, skills, users,
         visits,
@@ -57,7 +57,7 @@ pub fn routes() -> Scope {
 
 #[utoipa::path(
     context_path = "/nurses",
-    params(PaginationParam, SearchParam),
+    params(PaginationParam, SearchParam, SortParam),
     responses(
         (status = 200, description = "Paginated list of nurses", body = PaginatedNurses),
     ),
@@ -71,6 +71,7 @@ pub fn routes() -> Scope {
 async fn all(
     pagination: web::Query<PaginationParam>,
     search: web::Query<SearchParam>,
+    sort: web::Query<SortParam>,
     pool: web::Data<DbPool>,
     _: Auth,
 ) -> Result<impl Responder> {
@@ -83,6 +84,7 @@ async fn all(
         .filter(users::fname.ilike(search.value()))
         .or_filter(users::lname.ilike(search.value()))
         .or_filter(users::mail.ilike(search.value()))
+        .order(sort.raw_sql())
         .offset(pagination.offset().into())
         .limit(pagination.limit().into())
         .load(pool)?;

@@ -1,3 +1,4 @@
+use backend_derive::HasColumn;
 use diesel::{AsChangeset, Insertable, Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -5,7 +6,7 @@ use utoipa::ToSchema;
 use super::{Address, NewAddress, NewUser, User};
 use crate::schema::patients;
 
-#[derive(Serialize, Queryable, Selectable, ToSchema)]
+#[derive(Serialize, Queryable, Selectable, HasColumn, ToSchema)]
 #[diesel(table_name = patients)]
 pub struct PatientRecord {
     id: i64,

@@ -12,7 +12,7 @@ use crate::{
     error::{JsonError, Result},
     models::{MissionType, NewMissionType, UpdateMissionType},
     pagination::{PaginatedResponse, PaginationParam},
-    params::SearchParam,
+    params::{SearchParam, SortParam},
     schema::mission_types,
 };
 
@@ -43,7 +43,7 @@ pub fn routes() -> Scope {
 
 #[utoipa::path(
     context_path = "/mission_types",
-    params(PaginationParam, SearchParam),
+    params(PaginationParam, SearchParam, SortParam),
     responses(
         (status = 200, description = "Paginated list of missions types", body = PaginatedMissionTypes),
     ),
@@ -54,6 +54,7 @@ pub fn routes() -> Scope {
 async fn all(
     pagination: web::Query<PaginationParam>,
     search: web::Query<SearchParam>,
+    sort: web::Query<SortParam>,
     pool: web::Data<DbPool>,
     _: Auth,
 ) -> Result<impl Responder> {
@@ -61,6 +62,7 @@ async fn all(
 
     let res: Vec<MissionType> = req
         .clone()
+        .order(sort.raw_sql())
         .offset(pagination.offset().into())
         .limit(pagination.limit().into())
         .load(&mut pool.get()?)?;

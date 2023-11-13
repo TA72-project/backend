@@ -1,10 +1,11 @@
+use backend_derive::HasColumn;
 use diesel::{AsChangeset, Insertable, Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 use utoipa::{IntoParams, ToSchema};
 
 use crate::schema::mission_types;
 
-#[derive(Serialize, Queryable, Selectable, ToSchema)]
+#[derive(Serialize, Queryable, Selectable, HasColumn, ToSchema)]
 #[diesel(table_name = mission_types)]
 pub struct MissionType {
     id: i64,

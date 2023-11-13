@@ -5,5 +5,5 @@ CREATE TABLE "addresses" (
   "postcode" text NOT NULL,
   "city_name" text NOT NULL,
   "complement" text,
-  "id_zone" bigint NOT NULL REFERENCES "zones" ("id")
+  "id_zone" bigint NOT NULL REFERENCES "zones" ("id") ON DELETE CASCADE
 );

@@ -11,6 +11,7 @@ services:
     command: cargo watch --why -x run --features cors
     environment:
       DATABASE_URL: postgres://root:root@database/root
+      JWT_SECRET: "FAKE SECRET"
       CARGO_TARGET_DIR: /tmp/target
 
     healthcheck:

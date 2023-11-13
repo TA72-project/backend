@@ -14,6 +14,10 @@ use utoipa_redoc::{Redoc, Servable};
 async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(Env::default().default_filter_or("info"));
 
+    if let Err(e) = backend::auth::initialize_jwt() {
+        return Err(std::io::Error::new(io::ErrorKind::Other, e));
+    }
+
     let pool = database::create_pool();
 
     database::run_migrations(&mut pool.get().expect("Unable to get connection"))

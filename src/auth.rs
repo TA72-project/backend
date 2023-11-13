@@ -1,8 +1,9 @@
-use std::{borrow::Cow, future::Ready};
+use std::{borrow::Cow, env, future::Ready};
 
 use actix_web::{dev::ServiceRequest, FromRequest, HttpRequest};
 use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, DecodingKey, EncodingKey, Validation};
+use once_cell::sync::{Lazy, OnceCell};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -10,9 +11,49 @@ use crate::error::{Error, Result};
 
 type Hours = i64;
 
+/// Time the token is valid for
 pub static TOKEN_VALIDITY: Hours = 4;
+/// The name of the cookie that contains the token
 pub static COOKIE_TOKEN_NAME: &str = "token";
-pub static JWT_SECRET: &str = "TODO SECRET";
+/// The passphrase used to encode and decode the JWT
+static JWT_SECRET: OnceCell<String> = OnceCell::new();
+/// The JWT encoding key
+static ENCODING_KEY: Lazy<EncodingKey> = Lazy::new(|| {
+    EncodingKey::from_secret(
+        JWT_SECRET
+            .get()
+            .expect("JWT_SECRET is not initialized")
+            .as_bytes(),
+    )
+});
+/// The JWT decoding key
+static DECODING_KEY: Lazy<DecodingKey> = Lazy::new(|| {
+    DecodingKey::from_secret(
+        JWT_SECRET
+            .get()
+            .expect("JWT_SECRET is not initialized")
+            .as_bytes(),
+    )
+});
+
+/// Gets the `JWT_SECRET` env variable and register it for JWT authentication.
+///
+/// This function should be called only once at the start of the program.
+pub fn initialize_jwt() -> std::result::Result<(), String> {
+    let Ok(var) = env::var("JWT_SECRET") else {
+        return Err("JWT_SECRET env variable not set".into());
+    };
+
+    if var.is_empty() {
+        return Err("JWT_SECRET should not be empty".into());
+    }
+
+    if JWT_SECRET.set(var).is_err() {
+        return Err("JWT_SECRET was already set".into());
+    }
+
+    Ok(())
+}
 
 #[derive(Debug, PartialEq, Clone, Copy, Serialize, Deserialize, ToSchema)]
 pub enum Role {
@@ -66,11 +107,7 @@ impl TryFrom<Auth> for actix_web::cookie::Cookie<'_> {
     type Error = jsonwebtoken::errors::Error;
 
     fn try_from(value: Auth) -> std::result::Result<Self, Self::Error> {
-        let token = jsonwebtoken::encode(
-            &jsonwebtoken::Header::default(),
-            &value,
-            &EncodingKey::from_secret(JWT_SECRET.as_bytes()),
-        )?;
+        let token = jsonwebtoken::encode(&jsonwebtoken::Header::default(), &value, &ENCODING_KEY)?;
 
         Ok(Auth::build_cookie(token)
             .max_age(actix_web::cookie::time::Duration::hours(TOKEN_VALIDITY))
@@ -111,11 +148,7 @@ fn get_token(req: &HttpRequest) -> Result<Auth> {
     let mut validation = Validation::default();
     validation.set_required_spec_claims(&["exp"]);
 
-    let decoded_token = decode::<Auth>(
-        received_token.value(),
-        &DecodingKey::from_secret(JWT_SECRET.as_bytes()),
-        &validation,
-    );
+    let decoded_token = decode::<Auth>(received_token.value(), &DECODING_KEY, &validation);
 
     match decoded_token {
         Ok(t) => Ok(t.claims),

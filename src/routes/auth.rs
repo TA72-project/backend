@@ -29,7 +29,7 @@ pub fn routes() -> Scope {
 #[utoipa::path(
     context_path = "/auth",
     responses(
-        (status = 200, body = RoledUser),
+        (status = 200, body = LoggedUser),
         (status = 401),
     ),
     tag = "auth",

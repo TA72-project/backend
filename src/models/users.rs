@@ -25,10 +25,12 @@ pub struct User {
 }
 
 #[derive(Serialize, ToSchema)]
-pub struct RoledUser {
+pub struct LoggedUser {
     #[serde(flatten)]
     pub user: User,
     pub role: Role,
+    pub id_center: i64,
+    pub id_zone: Option<i64>,
 }
 
 #[derive(Deserialize, ToSchema)]

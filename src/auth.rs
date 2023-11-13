@@ -98,7 +98,7 @@ impl Auth {
     {
         actix_web::cookie::Cookie::build(COOKIE_TOKEN_NAME, value)
             .path("/")
-            .same_site(SameSite::Lax)
+            .same_site(SameSite::Strict)
             .secure(true)
             .http_only(true)
     }

@@ -1,6 +1,6 @@
 use std::{borrow::Cow, env, future::Ready};
 
-use actix_web::{dev::ServiceRequest, FromRequest, HttpRequest};
+use actix_web::{cookie::SameSite, dev::ServiceRequest, FromRequest, HttpRequest};
 use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, DecodingKey, EncodingKey, Validation};
 use once_cell::sync::{Lazy, OnceCell};
@@ -98,6 +98,7 @@ impl Auth {
     {
         actix_web::cookie::Cookie::build(COOKIE_TOKEN_NAME, value)
             .path("/")
+            .same_site(SameSite::Lax)
             .secure(true)
             .http_only(true)
     }

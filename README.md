@@ -28,8 +28,10 @@ The application is recompiled automatically on each file modification.
 
 Install Rust [here](https://www.rust-lang.org/tools/install).
 
-You'll then need to setup a Postgres database yourself. Add the environment variable
-`DATABASE_URL=<postgres://<user>:<password>@<host>/<database>`.
+You'll need two environment variables to start:
+
+- `DATABASE_URL`: connection string to a working PostgreSQL database of the form `postgres://<user>:<password>@<host>/<database>`
+- `JWT_SECRET`: for development, you can set any value
 
 Finally, run `cargo run` to start the server.
 

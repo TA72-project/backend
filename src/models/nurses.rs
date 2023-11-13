@@ -1,3 +1,4 @@
+use backend_derive::HasColumn;
 use diesel::{AsChangeset, Associations, Identifiable, Insertable, Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -5,7 +6,9 @@ use utoipa::ToSchema;
 use super::*;
 use crate::schema::nurses;
 
-#[derive(Clone, Copy, Identifiable, Selectable, Serialize, Queryable, Associations, ToSchema)]
+#[derive(
+    Clone, Copy, Identifiable, Selectable, Serialize, Queryable, Associations, HasColumn, ToSchema,
+)]
 #[diesel(table_name = nurses)]
 #[diesel(belongs_to(Address, foreign_key = id_address))]
 #[diesel(belongs_to(User, foreign_key = id_user))]

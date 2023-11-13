@@ -1,3 +1,4 @@
+use backend_derive::HasColumn;
 use chrono::NaiveDateTime;
 use diesel::{AsChangeset, Insertable, Queryable, Selectable};
 use serde::{Deserialize, Serialize};
@@ -6,7 +7,7 @@ use utoipa::ToSchema;
 use super::Mission;
 use crate::schema::visits;
 
-#[derive(Serialize, Queryable, Selectable, ToSchema)]
+#[derive(Serialize, Queryable, Selectable, HasColumn, ToSchema)]
 #[diesel(table_name = visits)]
 pub struct VisitRecord {
     id: i64,

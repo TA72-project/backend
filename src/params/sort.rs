@@ -7,6 +7,8 @@ use std::{
 use serde::de;
 use utoipa::IntoParams;
 
+use crate::models::{self};
+
 /// Direction in which to sort data.
 #[derive(Default, Debug, PartialEq, Eq, Clone)]
 enum OrderByDirection {
@@ -54,22 +56,9 @@ pub struct SortParam {
 }
 
 impl SortParam {
-    /// Returns the end of an `ORDER BY` statement.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let param = SortParam::default();
-    /// assert_eq(param.value(), "id asc");
-    /// ```
-    #[must_use]
-    pub fn value(&self) -> String {
-        format!("{} {}", self.col, self.direction)
-    }
-
     /// Returns an sql statement usable by [`diesel::query_dsl::QueryDsl::order`].
     pub fn raw_sql(&self) -> diesel::expression::SqlLiteral<diesel::sql_types::Text> {
-        diesel::dsl::sql::<diesel::sql_types::Text>(&self.value())
+        diesel::dsl::sql::<diesel::sql_types::Text>(&format!("{} {}", self.col, self.direction))
     }
 }
 
@@ -97,7 +86,7 @@ impl IntoParams for SortParam {
             .schema(Some(
                 utoipa::openapi::ObjectBuilder::new()
                     .schema_type(utoipa::openapi::SchemaType::String)
-                    .pattern(Some(r"[a-z_\.0-9]+(:(asc|desc))?")),
+                    .pattern(Some(r"[a-z_]+(:(asc|desc))?")),
             ))
             .build()]
     }
@@ -130,8 +119,11 @@ impl<'de> de::Deserialize<'de> for SortParam {
                         .expect("sort cannot be empty, expected column name")
                         .into();
 
-                    if col.is_empty() {
-                        return Err(de::Error::custom("column is empty"));
+                    if !models::has_column(&col) {
+                        return Err(de::Error::custom(format!(
+                            "column '{}' does not exist",
+                            &col
+                        )));
                     }
 
                     let direction = if let Some(dir) = data.next() {

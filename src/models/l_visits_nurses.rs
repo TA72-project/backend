@@ -1,10 +1,11 @@
+use backend_derive::HasColumn;
 use diesel::{AsChangeset, Insertable, Queryable};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::schema::l_visits_nurses;
 
-#[derive(Serialize, Queryable, ToSchema)]
+#[derive(Serialize, Queryable, HasColumn, ToSchema)]
 #[diesel(table_name = l_visits_nurses)]
 #[diesel(primary_key(id_visit, id_nurse))]
 pub struct LVisitNurse {

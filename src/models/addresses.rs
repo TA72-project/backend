@@ -1,12 +1,13 @@
 use std::fmt::Display;
 
+use backend_derive::HasColumn;
 use diesel::{Identifiable, Insertable, Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::schema::addresses;
 
-#[derive(Clone, Serialize, Queryable, Identifiable, Selectable, ToSchema)]
+#[derive(Clone, Serialize, Queryable, Identifiable, Selectable, HasColumn, ToSchema)]
 #[diesel(table_name = addresses)]
 pub struct Address {
     id: i64,

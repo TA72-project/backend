@@ -1,3 +1,4 @@
+use backend_derive::HasColumn;
 use chrono::NaiveDateTime;
 use diesel::{Queryable, Selectable};
 use serde::Serialize;
@@ -5,7 +6,7 @@ use utoipa::ToSchema;
 
 use crate::schema::availabilities;
 
-#[derive(Serialize, Selectable, Queryable, ToSchema)]
+#[derive(Serialize, Selectable, Queryable, HasColumn, ToSchema)]
 #[diesel(table_name = availabilities)]
 pub struct Availability {
     id: i64,

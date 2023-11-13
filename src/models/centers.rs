@@ -1,9 +1,10 @@
+use backend_derive::HasColumn;
 use chrono::NaiveTime;
 use diesel::Queryable;
 use serde::Serialize;
 use utoipa::ToSchema;
 
-#[derive(Clone, Serialize, Queryable, ToSchema)]
+#[derive(Clone, Serialize, Queryable, HasColumn, ToSchema)]
 #[diesel(table_name = centers)]
 pub struct CenterRecord {
     id: i64,

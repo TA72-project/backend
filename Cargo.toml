@@ -10,6 +10,7 @@ publish = false
 [workspace]
 members = [
     "workspace/macros",
+    "workspace/backend-derive",
 ]
 
 [dependencies]
@@ -32,6 +33,8 @@ icalendar = { version = "0.15.7", default-features = false }
 jsonwebtoken = "9.1.0"
 # Macros definition for easier common manipulations
 macros = { version = "0.1.0", path = "workspace/macros" }
+# proc-macro definition
+backend-derive = { version = "0.1.0", path = "workspace/backend-derive" }
 # Database pool
 r2d2 = "0.8.10"
 serde = { version = "1.0.189", features = ["derive"] }

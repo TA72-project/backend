@@ -26,16 +26,26 @@ pub struct Auth {
     iat: u64,
     /// User's id, may reference `nurses` or `managers` table.
     pub id: i64,
+    pub id_center: i64,
+    pub id_zone: Option<i64>,
     pub role: Role,
 }
 
 impl Auth {
-    pub fn new(id: i64, role: Role) -> Self {
+    /// Creates an auth structure from `(id, id_center, id_zone)`
+    ///
+    /// `id` may reference a nurse or a manager.
+    /// `id_zone` is `None` for a manager.
+    pub fn new(ids: (i64, i64, Option<i64>), role: Role) -> Self {
         let now = Utc::now();
+        let (id, id_center, id_zone) = ids;
+
         Self {
             exp: (now + Duration::hours(TOKEN_VALIDITY)).timestamp() as u64,
             iat: now.timestamp() as u64,
             id,
+            id_center,
+            id_zone,
             role,
         }
     }

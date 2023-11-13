@@ -76,8 +76,8 @@ impl SortParam {
 impl Default for SortParam {
     fn default() -> Self {
         Self {
-            sort: format!("id:{}", OrderByDirection::default()),
-            col: String::from("id"),
+            sort: format!("1:{}", OrderByDirection::default()),
+            col: String::from("1"),
             direction: OrderByDirection::default(),
         }
     }
@@ -97,7 +97,7 @@ impl IntoParams for SortParam {
             .schema(Some(
                 utoipa::openapi::ObjectBuilder::new()
                     .schema_type(utoipa::openapi::SchemaType::String)
-                    .pattern(Some("[a-z_]+(:(asc|desc))?")),
+                    .pattern(Some(r"[a-z_\.0-9]+(:(asc|desc))?")),
             ))
             .build()]
     }

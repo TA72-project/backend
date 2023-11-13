@@ -201,4 +201,10 @@ mod tests {
     fn incorrect_direction() {
         assert!(Query::<SortParam>::from_query("sort=name:incorrect_direction").is_err());
     }
+
+    /// Incorrect field gives error
+    #[test]
+    fn incorrect_field() {
+        assert!(Query::<SortParam>::from_query("sort=foo").is_err());
+    }
 }

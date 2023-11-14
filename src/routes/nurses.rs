@@ -292,8 +292,12 @@ async fn availabilities(
     query: web::Query<PaginationParam>,
     id: web::Path<i64>,
     pool: web::Data<DbPool>,
-    _: Auth,
+    auth: Auth,
 ) -> Result<impl Responder> {
+    if auth.role == Role::Nurse && auth.id != *id {
+        return Err(actix_web::error::ErrorForbidden("").into());
+    }
+
     let res: Vec<Availability> = schema::availabilities::table
         .filter(schema::availabilities::id_nurse.eq(*id))
         .limit(query.limit().into())

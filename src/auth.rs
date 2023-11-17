@@ -7,7 +7,10 @@ use once_cell::sync::{Lazy, OnceCell};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use crate::error::{Error, Result};
+use crate::{
+    error::{Error, Result},
+    models::LoggedUser,
+};
 
 type Hours = i64;
 
@@ -73,13 +76,17 @@ pub struct Auth {
 }
 
 impl Auth {
-    /// Creates an auth structure from `(id, id_center, id_zone)`
+    /// Creates an auth structure from id and a logged user.
     ///
-    /// `id` may reference a nurse or a manager.
-    /// `id_zone` is `None` for a manager.
-    pub fn new(ids: (i64, i64, Option<i64>), role: Role) -> Self {
+    /// `id` may reference a nurse or a manager depending on the role in `user`
+    pub fn new(id: i64, user: &LoggedUser) -> Self {
         let now = Utc::now();
-        let (id, id_center, id_zone) = ids;
+        let LoggedUser {
+            role,
+            id_center,
+            id_zone,
+            ..
+        } = *user;
 
         Self {
             exp: (now + Duration::hours(TOKEN_VALIDITY)).timestamp() as u64,

@@ -14,6 +14,7 @@ use crate::{
 #[derive(Clone, Serialize, Queryable, Identifiable, Selectable, HasColumn, ToSchema)]
 #[diesel(table_name = users)]
 pub struct User {
+    /// User ID. This is not the same as a nurse or manager id.
     pub id: i64,
     pub fname: String,
     pub lname: String,
@@ -30,6 +31,8 @@ pub struct LoggedUser {
     pub user: User,
     pub role: Role,
     pub id_center: i64,
+    /// ID of the zone the user is attached to.
+    /// Managers are not attached to any zone, only to a center.
     pub id_zone: Option<i64>,
 }
 

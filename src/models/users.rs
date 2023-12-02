@@ -15,6 +15,7 @@ use crate::{
 #[diesel(table_name = users)]
 pub struct User {
     /// User ID. This is not the same as a nurse or manager id.
+    #[serde(skip)]
     pub id: i64,
     pub fname: String,
     pub lname: String,

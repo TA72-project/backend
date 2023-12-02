@@ -4,7 +4,7 @@ use actix_web::{
     Responder, Scope,
 };
 use actix_web_grants::proc_macro::{has_any_role, has_roles};
-use diesel::{insert_into, ExpressionMethods, QueryDsl, RunQueryDsl};
+use diesel::{insert_into, ExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper};
 use macros::total;
 
 use crate::{
@@ -14,12 +14,12 @@ use crate::{
     models::*,
     pagination::{PaginatedResponse, PaginationParam},
     params::SortParam,
-    schema::{addresses, mission_types, missions, patients, users, visits},
+    schema::{self, addresses, mission_types, missions, patients, users, visits},
 };
 
 #[derive(utoipa::OpenApi)]
 #[openapi(
-    paths(all, get, post, put, delete),
+    paths(all, get, nurses, post, put, delete),
     components(schemas(
         Visit,
         VisitRecord,
@@ -35,6 +35,7 @@ pub fn routes() -> Scope {
     web::scope("/visits")
         .service(all)
         .service(get)
+        .service(nurses)
         .service(post)
         .service(put)
         .service(delete)
@@ -112,6 +113,45 @@ async fn get(id: web::Path<i64>, pool: web::Data<DbPool>, _: Auth) -> Result<imp
     .await??;
 
     Ok(Json(res))
+}
+
+#[utoipa::path(
+    context_path = "/visits",
+    responses(
+        (status = 200, body = PaginatedNurses),
+        (status = 404, body = JsonError)
+    ),
+    tag = "visits",
+    security(
+        ("token" = ["manager", "nurse"])
+    )
+)]
+#[get("/{id}/nurses")]
+#[has_any_role("Role::Manager", "Role::Nurse", type = "Role")]
+async fn nurses(
+    id: web::Path<i64>,
+    query: web::Query<PaginationParam>,
+    pool: web::Data<DbPool>,
+    _: Auth,
+) -> Result<impl Responder> {
+    let res: Vec<Nurse> = schema::nurses::table
+        .inner_join(schema::users::table)
+        .inner_join(schema::addresses::table)
+        .inner_join(schema::l_visits_nurses::table)
+        .filter(schema::l_visits_nurses::id_visit.eq(*id))
+        .limit(query.limit().into())
+        .offset(query.offset().into())
+        .select(Nurse::as_select())
+        .load(&mut pool.get()?)?;
+
+    let total: i64 = schema::l_visits_nurses::table
+        .filter(schema::l_visits_nurses::id_visit.eq(*id))
+        .count()
+        .get_result(&mut pool.get()?)?;
+
+    Ok(Json(
+        PaginatedResponse::new(res, &query).total(total as u32),
+    ))
 }
 
 #[utoipa::path(

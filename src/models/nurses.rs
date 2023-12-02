@@ -13,6 +13,7 @@ use crate::schema::nurses;
 #[diesel(belongs_to(Address, foreign_key = id_address))]
 #[diesel(belongs_to(User, foreign_key = id_user))]
 pub struct NurseRecord {
+    /// Nurse ID
     pub id: i64,
     /// Minutes of working time per week
     minutes_per_week: i32,
@@ -20,12 +21,15 @@ pub struct NurseRecord {
     id_address: i64,
 }
 
-#[derive(Serialize, Queryable, ToSchema)]
+#[derive(Serialize, Selectable, Queryable, ToSchema)]
 pub struct Nurse {
     #[serde(flatten)]
+    #[diesel(embed)]
     pub nurse: NurseRecord,
     #[serde(flatten)]
+    #[diesel(embed)]
     pub user: User,
+    #[diesel(embed)]
     address: Address,
 }
 

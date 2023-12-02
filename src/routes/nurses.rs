@@ -36,7 +36,7 @@ use crate::{
         NewUser,
         NewAddress,
         Availability,
-        crate::pagination::PaginatedNurses,
+        crate::pagination::PaginatedSkilledNurses,
         crate::pagination::PaginatedAvailabilities,
         JsonError
     ))
@@ -59,7 +59,7 @@ pub fn routes() -> Scope {
     context_path = "/nurses",
     params(PaginationParam, SearchParam, SortParam),
     responses(
-        (status = 200, description = "Paginated list of nurses", body = PaginatedNurses),
+        (status = 200, description = "Paginated list of nurses", body = PaginatedSkilledNurses),
     ),
     tag = "nurses",
     security(

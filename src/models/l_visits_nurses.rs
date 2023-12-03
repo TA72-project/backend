@@ -18,14 +18,13 @@ pub struct LVisitNurse {
 #[diesel(table_name = l_visits_nurses)]
 #[diesel(primary_key(id_visit, id_nurse))]
 pub struct UpdateLVisitNurse {
-    report: Option<Option<String>>,
+    report: String,
 }
 
 #[derive(Deserialize, Insertable, ToSchema)]
 #[diesel(table_name = l_visits_nurses)]
 #[diesel(primary_key(id_visit, id_nurse))]
 pub struct NewLVisitNurse {
-    id_visit: i64,
-    id_nurse: i64,
-    report: Option<String>,
+    pub id_visit: i64,
+    pub id_nurse: i64,
 }

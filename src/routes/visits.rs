@@ -14,16 +14,17 @@ use crate::{
     models::*,
     pagination::{PaginatedResponse, PaginationParam},
     params::SortParam,
-    schema::{self, addresses, mission_types, missions, patients, users, visits},
+    schema::{self, addresses, l_visits_nurses, mission_types, missions, patients, users, visits},
 };
 
 #[derive(utoipa::OpenApi)]
 #[openapi(
-    paths(all, get, nurses, post, put, delete),
+    paths(all, get, nurses, post, post_visit_nurse, put_report, put, delete),
     components(schemas(
         Visit,
         VisitRecord,
         UpdateVisit,
+        UpdateLVisitNurse,
         NewVisit,
         crate::pagination::PaginatedVisits,
         JsonError
@@ -37,6 +38,8 @@ pub fn routes() -> Scope {
         .service(get)
         .service(nurses)
         .service(post)
+        .service(post_visit_nurse)
+        .service(put_report)
         .service(put)
         .service(delete)
 }
@@ -155,8 +158,7 @@ async fn nurses(
 }
 
 #[utoipa::path(
-    post,
-    path = "/visits",
+    context_path = "/visits",
     responses(
         (status = 200),
         (status = 400, body = JsonError)
@@ -181,6 +183,78 @@ async fn post(
     .await??;
 
     Ok(Json(()))
+}
+
+/// Associate nurse & visit
+///
+/// Associates the given nurse with the given visit.
+#[utoipa::path(
+    context_path = "/visits",
+    responses(
+        (status = 200),
+    ),
+    tag = "visits",
+    security(
+        ("token" = ["manager"])
+    )
+)]
+#[post("/{id_visit}/nurses/{id_nurse}")]
+#[has_roles("Role::Manager", type = "Role")]
+async fn post_visit_nurse(
+    ids: web::Path<(i64, i64)>,
+    pool: web::Data<DbPool>,
+    _: Auth,
+) -> Result<impl Responder> {
+    web::block(move || {
+        insert_into(l_visits_nurses::table)
+            .values(&NewLVisitNurse {
+                id_visit: ids.0,
+                id_nurse: ids.1,
+            })
+            .execute(&mut pool.get().unwrap())
+    })
+    .await??;
+
+    Ok(Json(()))
+}
+
+/// Create report
+///
+/// Create or modify a report for the current nurse and the given visit.
+#[utoipa::path(
+    context_path = "/visits",
+    responses(
+        (status = 200),
+        (status = 400, body = JsonError),
+        (status = 404, body = JsonError),
+    ),
+    tag = "visits",
+    security(
+        ("token" = ["nurse"])
+    )
+)]
+#[put("/{id}/report")]
+#[has_roles("Role::Nurse", type = "Role")]
+async fn put_report(
+    id: web::Path<i64>,
+    update_record: Json<UpdateLVisitNurse>,
+    pool: web::Data<DbPool>,
+    auth: Auth,
+) -> Result<impl Responder> {
+    let rows = web::block(move || {
+        diesel::update(l_visits_nurses::table)
+            .set(&update_record.0)
+            .filter(l_visits_nurses::id_visit.eq(*id))
+            .filter(l_visits_nurses::id_nurse.eq(auth.id))
+            .execute(&mut pool.get().unwrap())
+    })
+    .await??;
+
+    if rows == 0 {
+        Err(diesel::result::Error::NotFound.into())
+    } else {
+        Ok(Json(()))
+    }
 }
 
 #[utoipa::path(

@@ -172,7 +172,7 @@ async fn nurses(
 
 /// Visit's reports
 ///
-/// Returns the reports of a visit. Every report is included, even if null or empty.
+/// Returns the reports of a visit. Null or empty reports are not included.
 #[utoipa::path(
     context_path = "/visits",
     params(PaginationParam),
@@ -194,12 +194,16 @@ async fn reports(
 ) -> Result<impl Responder> {
     let res: Vec<LVisitNurse> = schema::l_visits_nurses::table
         .filter(schema::l_visits_nurses::id_visit.eq(*id))
+        .filter(schema::l_visits_nurses::report.is_not_null())
+        .filter(schema::l_visits_nurses::report.ne(""))
         .limit(query.limit().into())
         .offset(query.offset().into())
         .load(&mut pool.get()?)?;
 
     let total: i64 = schema::l_visits_nurses::table
         .filter(schema::l_visits_nurses::id_nurse.eq(*id))
+        .filter(schema::l_visits_nurses::report.is_not_null())
+        .filter(schema::l_visits_nurses::report.ne(""))
         .count()
         .get_result(&mut pool.get()?)?;
 

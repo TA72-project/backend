@@ -24,7 +24,7 @@ use crate::{
 
 #[derive(utoipa::OpenApi)]
 #[openapi(
-    paths(all, get, me, post, put, delete, availabilities, ical),
+    paths(all, get, me, post, put, delete, availabilities, reports, ical),
     components(schemas(
         Nurse,
         SkilledNurse,
@@ -36,6 +36,8 @@ use crate::{
         NewUser,
         NewAddress,
         Availability,
+        LVisitNurse,
+        crate::pagination::PaginatedLVisitsNurses,
         crate::pagination::PaginatedSkilledNurses,
         crate::pagination::PaginatedAvailabilities,
         JsonError
@@ -52,6 +54,7 @@ pub fn routes() -> Scope {
         .service(put)
         .service(delete)
         .service(availabilities)
+        .service(reports)
         .service(ical)
 }
 
@@ -295,7 +298,10 @@ async fn availabilities(
     auth: Auth,
 ) -> Result<impl Responder> {
     if auth.role == Role::Nurse && auth.id != *id {
-        return Err(actix_web::error::ErrorForbidden("").into());
+        return Err(actix_web::error::ErrorForbidden(
+            "A nurse can only access its own availabilities",
+        )
+        .into());
     }
 
     let res: Vec<Availability> = schema::availabilities::table
@@ -306,6 +312,55 @@ async fn availabilities(
 
     let total: i64 = schema::availabilities::table
         .filter(schema::availabilities::id_nurse.eq(*id))
+        .count()
+        .get_result(&mut pool.get()?)?;
+
+    Ok(Json(
+        PaginatedResponse::new(res, &query).total(total as u32),
+    ))
+}
+
+/// Nurse's reports
+///
+/// Get the reports from a nurse. A manager can access every nurse. A nurse can only access itself.
+/// Reports that are either null or empty are not returned.
+#[utoipa::path(
+    context_path = "/nurses",
+    params(PaginationParam),
+    responses(
+        (status = 200, description = "Paginated list of reports", body = PaginatedLVisitsNurses),
+    ),
+    tag = "nurses",
+    security(
+        ("token" = ["manager", "nurse"])
+    )
+)]
+#[get("/{id}/reports")]
+#[has_any_role["Role::Manager", "Role::Nurse", type = "Role"]]
+async fn reports(
+    query: web::Query<PaginationParam>,
+    id: web::Path<i64>,
+    pool: web::Data<DbPool>,
+    auth: Auth,
+) -> Result<impl Responder> {
+    if auth.role == Role::Nurse && auth.id != *id {
+        return Err(
+            actix_web::error::ErrorForbidden("A nurse can only access its own reports").into(),
+        );
+    }
+
+    let res: Vec<LVisitNurse> = schema::l_visits_nurses::table
+        .filter(schema::l_visits_nurses::id_nurse.eq(*id))
+        .filter(schema::l_visits_nurses::report.is_not_null())
+        .filter(schema::l_visits_nurses::report.ne(""))
+        .limit(query.limit().into())
+        .offset(query.offset().into())
+        .load(&mut pool.get()?)?;
+
+    let total: i64 = schema::l_visits_nurses::table
+        .filter(schema::l_visits_nurses::id_nurse.eq(*id))
+        .filter(schema::l_visits_nurses::report.is_not_null())
+        .filter(schema::l_visits_nurses::report.ne(""))
         .count()
         .get_result(&mut pool.get()?)?;
 

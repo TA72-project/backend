@@ -25,6 +25,10 @@ pub struct MissionRecord {
     people_required: i16,
     /// Mission duration in minutes
     minutes_duration: i32,
+    /// Tells whether the mission is archived.
+    ///
+    /// An archived mission is a mission that no longer takes place.
+    archived: bool,
     /// ID of the type of mission
     id_mission_type: i64,
     /// ID of the patient related to this mission
@@ -59,6 +63,10 @@ pub struct UpdateMission {
     people_required: Option<i16>,
     /// Mission duration in minutes
     minutes_duration: Option<i32>,
+    /// Tells whether the mission is archived.
+    ///
+    /// An archived mission is a mission that no longer takes place.
+    archived: Option<bool>,
     /// ID of the type of mission
     id_mission_type: Option<i64>,
 }
@@ -80,6 +88,10 @@ pub struct NewMission {
     people_required: Option<i16>,
     /// Mission duration in minutes
     minutes_duration: i32,
+    /// Tells whether the mission is archived.
+    ///
+    /// An archived mission is a mission that no longer takes place.
+    archived: Option<bool>,
     /// ID of the type of mission
     id_mission_type: i64,
     /// ID of the patient related to this mission

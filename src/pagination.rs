@@ -58,6 +58,7 @@ impl PaginationParam {
     PaginatedManagers = PaginatedResponse<Manager>,
     PaginatedAvailabilities = PaginatedResponse<Availability>,
     PaginatedZones = PaginatedResponse<ZoneRecord>,
+    PaginatedLVisitsNurses = PaginatedResponse<LVisitNurse>,
 )]
 pub struct PaginatedResponse<T: Serialize> {
     /// Paginated data

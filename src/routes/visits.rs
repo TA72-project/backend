@@ -19,13 +19,25 @@ use crate::{
 
 #[derive(utoipa::OpenApi)]
 #[openapi(
-    paths(all, get, nurses, post, post_visit_nurse, put_report, put, delete),
+    paths(
+        all,
+        get,
+        nurses,
+        reports,
+        post,
+        post_visit_nurse,
+        put_report,
+        put,
+        delete
+    ),
     components(schemas(
         Visit,
         VisitRecord,
         UpdateVisit,
         UpdateLVisitNurse,
         NewVisit,
+        LVisitNurse,
+        crate::pagination::PaginatedLVisitsNurses,
         crate::pagination::PaginatedVisits,
         JsonError
     ))
@@ -37,6 +49,7 @@ pub fn routes() -> Scope {
         .service(all)
         .service(get)
         .service(nurses)
+        .service(reports)
         .service(post)
         .service(post_visit_nurse)
         .service(put_report)
@@ -149,6 +162,44 @@ async fn nurses(
 
     let total: i64 = schema::l_visits_nurses::table
         .filter(schema::l_visits_nurses::id_visit.eq(*id))
+        .count()
+        .get_result(&mut pool.get()?)?;
+
+    Ok(Json(
+        PaginatedResponse::new(res, &query).total(total as u32),
+    ))
+}
+
+/// Visit's reports
+///
+/// Returns the reports of a visit. Every report is included, even if null or empty.
+#[utoipa::path(
+    context_path = "/visits",
+    params(PaginationParam),
+    responses(
+        (status = 200, description = "Paginated list of reports from the given visit", body = PaginatedLVisitsNurses),
+    ),
+    tag = "visits",
+    security(
+        ("token" = ["manager"])
+    )
+)]
+#[get("/{id}/reports")]
+#[has_any_role["Role::Manager", type = "Role"]]
+async fn reports(
+    query: web::Query<PaginationParam>,
+    id: web::Path<i64>,
+    pool: web::Data<DbPool>,
+    _: Auth,
+) -> Result<impl Responder> {
+    let res: Vec<LVisitNurse> = schema::l_visits_nurses::table
+        .filter(schema::l_visits_nurses::id_visit.eq(*id))
+        .limit(query.limit().into())
+        .offset(query.offset().into())
+        .load(&mut pool.get()?)?;
+
+    let total: i64 = schema::l_visits_nurses::table
+        .filter(schema::l_visits_nurses::id_nurse.eq(*id))
         .count()
         .get_result(&mut pool.get()?)?;
 

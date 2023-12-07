@@ -214,10 +214,13 @@ async fn reports(
     ))
 }
 
+/// Create a visit
+///
+/// This route creates a visit, returning its ID.
 #[utoipa::path(
     context_path = "/visits",
     responses(
-        (status = 200),
+        (status = 200, body = i64),
         (status = 400, body = JsonError)
     ),
     tag = "visits",
@@ -232,14 +235,15 @@ async fn post(
     pool: web::Data<DbPool>,
     _: Auth,
 ) -> Result<impl Responder> {
-    web::block(move || {
+    let id: i64 = web::block(move || {
         insert_into(visits::table)
             .values(&new_record.0)
-            .execute(&mut pool.get().unwrap())
+            .returning(visits::id)
+            .get_result(&mut pool.get().unwrap())
     })
     .await??;
 
-    Ok(Json(()))
+    Ok(Json(id))
 }
 
 /// Associate nurse & visit

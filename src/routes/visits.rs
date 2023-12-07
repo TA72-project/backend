@@ -28,7 +28,8 @@ use crate::{
         post_visit_nurse,
         put_report,
         put,
-        delete
+        delete,
+        delete_visit_nurse
     ),
     components(schemas(
         Visit,
@@ -55,6 +56,7 @@ pub fn routes() -> Scope {
         .service(put_report)
         .service(put)
         .service(delete)
+        .service(delete_visit_nurse)
 }
 
 #[utoipa::path(
@@ -360,4 +362,41 @@ async fn delete(id: web::Path<i64>, pool: web::Data<DbPool>, _: Auth) -> Result<
     macros::delete!(visits, pool, *id);
 
     Ok(Json(()))
+}
+
+/// Dissociate nurse & visit
+///
+/// Dissociates the given nurse with the given visit. I.e. the nurse is no longer affected to this
+/// visit.
+#[utoipa::path(
+    context_path = "/visits",
+    responses(
+        (status = 200),
+        (status = 404, body = JsonError)
+    ),
+    tag = "visits",
+    security(
+        ("token" = ["manager"])
+    )
+)]
+#[delete("/{id_visit}/nurses/{id_nurse}")]
+#[has_roles("Role::Manager", type = "Role")]
+async fn delete_visit_nurse(
+    ids: web::Path<(i64, i64)>,
+    pool: web::Data<DbPool>,
+    _: Auth,
+) -> Result<impl Responder> {
+    let rows = web::block(move || {
+        diesel::delete(l_visits_nurses::table)
+            .filter(l_visits_nurses::id_visit.eq(ids.0))
+            .filter(l_visits_nurses::id_nurse.eq(ids.1))
+            .execute(&mut pool.get().unwrap())
+    })
+    .await??;
+
+    if rows == 0 {
+        Err(diesel::result::Error::NotFound.into())
+    } else {
+        Ok(Json(()))
+    }
 }

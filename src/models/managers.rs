@@ -24,6 +24,7 @@ pub struct Manager {
 #[derive(Deserialize, Insertable, ToSchema)]
 #[diesel(table_name = managers)]
 pub struct NewManagerRecord {
+    #[serde(skip_deserializing)]
     pub id_user: i64,
     pub id_center: i64,
 }

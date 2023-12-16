@@ -10,15 +10,15 @@ use crate::{
     auth::{Auth, Role},
     database::DbPool,
     error::{JsonError, Result},
-    models::{MissionType, NewMissionType, UpdateMissionType},
+    models::{MissionType, NewLMissionSkill, NewMissionType, UpdateMissionType},
     pagination::{PaginatedResponse, PaginationParam},
     params::{SearchParam, SortParam},
-    schema::mission_types,
+    schema::{l_missions_skills, mission_types},
 };
 
 #[derive(utoipa::OpenApi)]
 #[openapi(
-    paths(all, get, post, put, delete),
+    paths(all, get, post, post_mission_type_skill, put, delete, delete_mission_type_skill),
     components(schemas(
         MissionType,
         UpdateMissionType,
@@ -37,8 +37,10 @@ pub fn routes() -> Scope {
         .service(all)
         .service(get)
         .service(post)
+        .service(post_mission_type_skill)
         .service(put)
         .service(delete)
+        .service(delete_mission_type_skill)
 }
 
 #[utoipa::path(
@@ -113,6 +115,36 @@ async fn post(
     Ok(Json(()))
 }
 
+/// Associate mission_type & skill
+///
+/// Associates the given mission_type with the given skill.
+#[utoipa::path(
+    context_path = "/mission_types",
+    responses(
+        (status = 200),
+    ),
+    tag = "mission_types",
+    security(
+        ("token" = ["manager"])
+    )
+)]
+#[post("/{id_mission_type}/skills/{id_skill}")]
+#[has_roles("Role::Manager", type = "Role")]
+async fn post_mission_type_skill(
+    ids: web::Path<(i64, i64)>,
+    pool: web::Data<DbPool>,
+    _: Auth,
+) -> Result<impl Responder> {
+    insert_into(l_missions_skills::table)
+        .values(&NewLMissionSkill {
+            id_mission_type: ids.0,
+            id_skill: ids.1,
+        })
+        .execute(&mut pool.get()?)?;
+
+    Ok(Json(()))
+}
+
 #[utoipa::path(
     context_path = "/mission_types",
     responses(
@@ -155,4 +187,37 @@ async fn delete(id: web::Path<i64>, pool: web::Data<DbPool>, _: Auth) -> Result<
     macros::delete!(mission_types, pool, *id);
 
     Ok(Json(()))
+}
+
+/// Dissociate mission_type & skill
+///
+/// Dissociates the given mission_type and the given skill.
+#[utoipa::path(
+    context_path = "/mission_types",
+    responses(
+        (status = 200),
+        (status = 404, body = JsonError)
+    ),
+    tag = "mission_types",
+    security(
+        ("token" = ["manager"])
+    )
+)]
+#[delete("/{id_mission_type}/skills/{id_skill}")]
+#[has_roles("Role::Manager", type = "Role")]
+async fn delete_mission_type_skill(
+    ids: web::Path<(i64, i64)>,
+    pool: web::Data<DbPool>,
+    _: Auth,
+) -> Result<impl Responder> {
+    let rows = diesel::delete(l_missions_skills::table)
+        .filter(l_missions_skills::id_mission_type.eq(ids.0))
+        .filter(l_missions_skills::id_skill.eq(ids.1))
+        .execute(&mut pool.get()?)?;
+
+    if rows == 0 {
+        Err(diesel::result::Error::NotFound.into())
+    } else {
+        Ok(Json(()))
+    }
 }

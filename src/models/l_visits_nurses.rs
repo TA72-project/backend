@@ -21,7 +21,7 @@ pub struct UpdateLVisitNurse {
     report: String,
 }
 
-#[derive(Deserialize, Insertable, ToSchema)]
+#[derive(Deserialize, Insertable)]
 #[diesel(table_name = l_visits_nurses)]
 #[diesel(primary_key(id_visit, id_nurse))]
 pub struct NewLVisitNurse {

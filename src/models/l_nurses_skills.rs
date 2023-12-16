@@ -1,5 +1,6 @@
 use backend_derive::HasColumn;
-use diesel::{Associations, Identifiable, Queryable, Selectable};
+use diesel::{Associations, Identifiable, Insertable, Queryable, Selectable};
+use serde::Deserialize;
 
 use super::*;
 use crate::schema::l_nurses_skills;
@@ -12,4 +13,12 @@ use crate::schema::l_nurses_skills;
 pub struct LNurseSkill {
     id_nurse: i64,
     id_skill: i64,
+}
+
+#[derive(Deserialize, Insertable)]
+#[diesel(table_name = l_nurses_skills)]
+#[diesel(primary_key(id_nurse, id_skill))]
+pub struct NewLNurseSkill {
+    pub id_nurse: i64,
+    pub id_skill: i64,
 }

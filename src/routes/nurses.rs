@@ -1,5 +1,7 @@
 use actix_web::{
-    delete, get, post, put,
+    delete,
+    error::ErrorForbidden,
+    get, post, put,
     web::{self, Json},
     Responder, Scope,
 };
@@ -17,14 +19,26 @@ use crate::{
     pagination::{PaginatedResponse, PaginationParam},
     params::{SearchParam, SortParam},
     schema::{
-        self, addresses, l_visits_nurses, mission_types, missions, nurses, patients, skills, users,
-        visits,
+        self, addresses, l_nurses_skills, l_visits_nurses, mission_types, missions, nurses,
+        patients, skills, users, visits, zones,
     },
 };
 
 #[derive(utoipa::OpenApi)]
 #[openapi(
-    paths(all, get, me, post, put, delete, availabilities, reports, ical),
+    paths(
+        all,
+        get,
+        me,
+        post,
+        post_nurse_skill,
+        put,
+        delete,
+        delete_nurse_skill,
+        availabilities,
+        reports,
+        ical
+    ),
     components(schemas(
         Nurse,
         SkilledNurse,
@@ -51,8 +65,10 @@ pub fn routes() -> Scope {
         .service(me)
         .service(get)
         .service(post)
+        .service(post_nurse_skill)
         .service(put)
         .service(delete)
+        .service(delete_nurse_skill)
         .service(availabilities)
         .service(reports)
         .service(ical)
@@ -163,7 +179,7 @@ async fn get(id: web::Path<i64>, pool: web::Data<DbPool>, auth: Auth) -> Result<
     let p2 = pool.clone();
 
     if auth.role == Role::Nurse && auth.id != *id {
-        return Err(actix_web::error::ErrorForbidden("").into());
+        return Err(ErrorForbidden("").into());
     }
 
     let nurse: Nurse = macros::get!(nurses, pool, *id, users, addresses);
@@ -227,6 +243,45 @@ async fn post(
     Ok(Json(()))
 }
 
+/// Associate nurse & skill
+///
+/// Associates the given nurse with the given skill.
+#[utoipa::path(
+    context_path = "/nurses",
+    responses(
+        (status = 200),
+    ),
+    tag = "nurses",
+    security(
+        ("token" = ["manager"])
+    )
+)]
+#[post("/{id_nurse}/skills/{id_skill}")]
+#[has_roles("Role::Manager", type = "Role")]
+async fn post_nurse_skill(
+    ids: web::Path<(i64, i64)>,
+    pool: web::Data<DbPool>,
+    auth: Auth,
+) -> Result<impl Responder> {
+    let id_center: i64 = nurses::table
+        .inner_join(addresses::table.inner_join(zones::table))
+        .select(zones::id_center)
+        .get_result(&mut pool.get()?)?;
+
+    if id_center != auth.id_center {
+        return Err(ErrorForbidden("").into());
+    }
+
+    insert_into(l_nurses_skills::table)
+        .values(&NewLNurseSkill {
+            id_nurse: ids.0,
+            id_skill: ids.1,
+        })
+        .execute(&mut pool.get()?)?;
+
+    Ok(Json(()))
+}
+
 #[utoipa::path(
     context_path = "/nurses",
     responses(
@@ -248,7 +303,7 @@ async fn put(
     auth: Auth,
 ) -> Result<impl Responder> {
     if auth.role == Role::Nurse && auth.id != *id {
-        return Err(actix_web::error::ErrorForbidden("").into());
+        return Err(ErrorForbidden("").into());
     }
 
     web::block(move || {
@@ -278,6 +333,48 @@ async fn delete(id: web::Path<i64>, pool: web::Data<DbPool>, _: Auth) -> Result<
     Ok(Json(()))
 }
 
+/// Dissociate nurse & skill
+///
+/// Dissociates the given nurse with the given skill.
+#[utoipa::path(
+    context_path = "/nurses",
+    responses(
+        (status = 200),
+        (status = 404, body = JsonError)
+    ),
+    tag = "nurses",
+    security(
+        ("token" = ["manager"])
+    )
+)]
+#[delete("/{id_nurse}/skills/{id_skill}")]
+#[has_roles("Role::Manager", type = "Role")]
+async fn delete_nurse_skill(
+    ids: web::Path<(i64, i64)>,
+    pool: web::Data<DbPool>,
+    auth: Auth,
+) -> Result<impl Responder> {
+    let id_center: i64 = nurses::table
+        .inner_join(addresses::table.inner_join(zones::table))
+        .select(zones::id_center)
+        .get_result(&mut pool.get()?)?;
+
+    if id_center != auth.id_center {
+        return Err(ErrorForbidden("").into());
+    }
+
+    let rows = diesel::delete(l_nurses_skills::table)
+        .filter(l_nurses_skills::id_nurse.eq(ids.0))
+        .filter(l_nurses_skills::id_skill.eq(ids.1))
+        .execute(&mut pool.get()?)?;
+
+    if rows == 0 {
+        Err(diesel::result::Error::NotFound.into())
+    } else {
+        Ok(Json(()))
+    }
+}
+
 #[utoipa::path(
     context_path = "/nurses",
     params(PaginationParam),
@@ -298,10 +395,7 @@ async fn availabilities(
     auth: Auth,
 ) -> Result<impl Responder> {
     if auth.role == Role::Nurse && auth.id != *id {
-        return Err(actix_web::error::ErrorForbidden(
-            "A nurse can only access its own availabilities",
-        )
-        .into());
+        return Err(ErrorForbidden("A nurse can only access its own availabilities").into());
     }
 
     let res: Vec<Availability> = schema::availabilities::table
@@ -344,9 +438,7 @@ async fn reports(
     auth: Auth,
 ) -> Result<impl Responder> {
     if auth.role == Role::Nurse && auth.id != *id {
-        return Err(
-            actix_web::error::ErrorForbidden("A nurse can only access its own reports").into(),
-        );
+        return Err(ErrorForbidden("A nurse can only access its own reports").into());
     }
 
     let res: Vec<LVisitNurse> = schema::l_visits_nurses::table

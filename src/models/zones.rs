@@ -1,5 +1,5 @@
 use backend_derive::HasColumn;
-use diesel::{Insertable, Queryable, AsChangeset};
+use diesel::{AsChangeset, Insertable, Queryable};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 

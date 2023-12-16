@@ -51,6 +51,7 @@ async fn main() -> std::io::Result<()> {
                     .service(missions::routes())
                     .service(visits::routes())
                     .service(managers::routes())
+                    .service(zones::routes())
                     .service(routes::auth::routes())
                     .service(version::routes()),
             )

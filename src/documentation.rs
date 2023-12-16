@@ -26,6 +26,7 @@ pub fn doc() -> utoipa::openapi::OpenApi {
     doc.merge(visits::Doc::openapi());
     doc.merge(managers::Doc::openapi());
     doc.merge(auth::Doc::openapi());
+    doc.merge(zones::Doc::openapi());
 
     SecurityAddon.modify(&mut doc);
 

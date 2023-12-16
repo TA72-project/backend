@@ -13,3 +13,5 @@ pub mod patients;
 pub mod skills;
 pub mod version;
 pub mod visits;
+pub mod zones;
+

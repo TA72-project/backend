@@ -1,5 +1,7 @@
 use actix_web::{
-    delete, get, post,
+    delete,
+    error::ErrorForbidden,
+    get, post,
     web::{self, Json},
     Responder, Scope,
 };
@@ -145,6 +147,9 @@ async fn post(
     Ok(Json(()))
 }
 
+/// Delete manager
+///
+/// This will also delete the associated user
 #[utoipa::path(
     context_path = "/managers",
     responses(
@@ -155,8 +160,27 @@ async fn post(
 )]
 #[delete("/{id}")]
 #[has_roles("Role::Manager", type = "Role")]
-async fn delete(id: web::Path<i64>, pool: web::Data<DbPool>, _: Auth) -> Result<impl Responder> {
-    macros::delete!(managers, pool, *id);
+async fn delete(id: web::Path<i64>, pool: web::Data<DbPool>, auth: Auth) -> Result<impl Responder> {
+    let id_center: i64 = managers::table
+        .select(managers::id_center)
+        .get_result(&mut pool.get()?)?;
+
+    if id_center != auth.id_center {
+        return Err(ErrorForbidden("").into());
+    }
+
+    pool.get()?.build_transaction().run(|conn| {
+        let id_user: i64 = diesel::delete(managers::table)
+            .filter(managers::id.eq(*id))
+            .returning(managers::id_user)
+            .get_result(conn)?;
+
+        diesel::delete(users::table)
+            .filter(users::id.eq(id_user))
+            .execute(conn)?;
+
+        Ok::<(), diesel::result::Error>(())
+    })?;
 
     Ok(Json(()))
 }

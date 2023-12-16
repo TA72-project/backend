@@ -317,6 +317,9 @@ async fn put(
     Ok(Json(()))
 }
 
+/// Delete nurse
+///
+/// This will also delete the associated user and address.
 #[utoipa::path(
     context_path = "/nurses",
     responses(
@@ -327,8 +330,32 @@ async fn put(
 )]
 #[delete("/{id}")]
 #[has_roles("Role::Manager", type = "Role")]
-async fn delete(id: web::Path<i64>, pool: web::Data<DbPool>, _: Auth) -> Result<impl Responder> {
-    macros::delete!(nurses, pool, *id);
+async fn delete(id: web::Path<i64>, pool: web::Data<DbPool>, auth: Auth) -> Result<impl Responder> {
+    let id_center: i64 = nurses::table
+        .inner_join(addresses::table.inner_join(zones::table))
+        .select(zones::id_center)
+        .get_result(&mut pool.get()?)?;
+
+    if id_center != auth.id_center {
+        return Err(ErrorForbidden("").into());
+    }
+
+    pool.get()?.build_transaction().run(|conn| {
+        let (id_user, id_address): (i64, i64) = diesel::delete(nurses::table)
+            .filter(nurses::id.eq(*id))
+            .returning((nurses::id_user, nurses::id_address))
+            .get_result(conn)?;
+
+        diesel::delete(users::table)
+            .filter(users::id.eq(id_user))
+            .execute(conn)?;
+
+        diesel::delete(addresses::table)
+            .filter(addresses::id.eq(id_address))
+            .execute(conn)?;
+
+        Ok::<(), diesel::result::Error>(())
+    })?;
 
     Ok(Json(()))
 }

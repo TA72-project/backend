@@ -53,8 +53,17 @@ impl From<(Vec<(LNurseSkill, Skill)>, Nurse)> for SkilledNurse {
 
 #[derive(Clone, Deserialize, AsChangeset, ToSchema)]
 #[diesel(table_name = nurses)]
-pub struct UpdateNurse {
+pub struct UpdateNurseRecord {
     minutes_per_week: Option<i32>,
+}
+
+#[derive(Deserialize, ToSchema)]
+pub struct UpdateNurse {
+    #[serde(flatten)]
+    pub nurse: UpdateNurseRecord,
+    #[serde(flatten)]
+    pub user: UpdateUser,
+    pub address: UpdateAddress,
 }
 
 #[derive(Insertable, Deserialize, ToSchema)]

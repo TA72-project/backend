@@ -43,6 +43,7 @@ use crate::{
         Nurse,
         SkilledNurse,
         NurseRecord,
+        UpdateNurseRecord,
         UpdateNurse,
         NewNurseRecord,
         NewNurse,
@@ -302,17 +303,40 @@ async fn put(
     pool: web::Data<DbPool>,
     auth: Auth,
 ) -> Result<impl Responder> {
-    if auth.role == Role::Nurse && auth.id != *id {
+    let (id_user, id_address) = if auth.role == Role::Nurse && auth.id != *id {
         return Err(ErrorForbidden("").into());
-    }
-
-    web::block(move || {
-        diesel::update(nurses::table)
-            .set(&update_record.0)
+    } else {
+        let (id_center, id_user, id_address): (i64, i64, i64) = nurses::table
+            .inner_join(addresses::table.inner_join(zones::table))
             .filter(nurses::id.eq(*id))
-            .execute(&mut pool.get().unwrap())
-    })
-    .await??;
+            .select((zones::id_center, nurses::id_user, nurses::id_address))
+            .first(&mut pool.get()?)?;
+
+        if id_center != auth.id_center {
+            return Err(ErrorForbidden("").into());
+        } else {
+            (id_user, id_address)
+        }
+    };
+
+    pool.get()?.build_transaction().run(|conn| {
+        diesel::update(nurses::table)
+            .set(&update_record.nurse)
+            .filter(nurses::id.eq(*id))
+            .execute(conn)?;
+
+        diesel::update(users::table)
+            .set(&update_record.user)
+            .filter(users::id.eq(id_user))
+            .execute(conn)?;
+
+        diesel::update(addresses::table)
+            .set(&update_record.address)
+            .filter(addresses::id.eq(id_address))
+            .execute(conn)?;
+
+        Ok::<(), diesel::result::Error>(())
+    })?;
 
     Ok(Json(()))
 }

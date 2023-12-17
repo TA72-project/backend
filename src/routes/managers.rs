@@ -1,7 +1,7 @@
 use actix_web::{
     delete,
     error::ErrorForbidden,
-    get, post,
+    get, post, put,
     web::{self, Json},
     Responder, Scope,
 };
@@ -20,12 +20,13 @@ use crate::{
 
 #[derive(utoipa::OpenApi)]
 #[openapi(
-    paths(all, me, get, post, delete),
+    paths(all, me, get, post, put, delete),
     components(schemas(
         ManagerRecord,
         Manager,
         User,
         NewManager,
+        UpdateUser,
         NewManagerRecord,
         NewUser,
         crate::pagination::PaginatedManagers,
@@ -43,6 +44,7 @@ pub fn routes() -> Scope {
         .service(me)
         .service(get)
         .service(post)
+        .service(put)
         .service(delete)
 }
 
@@ -143,6 +145,34 @@ async fn post(
 
         Ok::<(), diesel::result::Error>(())
     })?;
+
+    Ok(Json(()))
+}
+
+#[utoipa::path(
+    path = "/managers",
+    responses(
+        (status = 200),
+        (status = 400, body = JsonError),
+    ),
+    tag = "managers"
+)]
+#[put("/{id}")]
+#[has_roles("Role::Manager", type = "Role")]
+async fn put(
+    id: web::Path<i64>,
+    update_record: Json<UpdateUser>,
+    pool: web::Data<DbPool>,
+    auth: Auth,
+) -> Result<impl Responder> {
+    if auth.id != *id {
+        return Err(ErrorForbidden("").into());
+    }
+
+    diesel::update(users::table)
+        .set(&update_record.0)
+        .filter(users::id.eq(auth.id_user))
+        .execute(&mut pool.get()?)?;
 
     Ok(Json(()))
 }

@@ -1,7 +1,7 @@
 use std::option::Option;
 
 use backend_derive::HasColumn;
-use diesel::{ExpressionMethods, Identifiable, Insertable, Queryable, Selectable};
+use diesel::{AsChangeset, ExpressionMethods, Identifiable, Insertable, Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -35,6 +35,12 @@ pub struct LoggedUser {
     /// ID of the zone the user is attached to.
     /// Managers are not attached to any zone, only to a center.
     pub id_zone: Option<i64>,
+}
+
+#[derive(Deserialize, ToSchema)]
+pub struct LoginUser {
+    pub mail: String,
+    pub password: String,
 }
 
 #[derive(Deserialize, ToSchema)]
@@ -73,8 +79,12 @@ impl Insertable<users::table> for NewUser {
     }
 }
 
-#[derive(Deserialize, ToSchema)]
-pub struct LoginUser {
-    pub mail: String,
-    pub password: String,
+#[derive(Deserialize, AsChangeset, ToSchema)]
+#[diesel(table_name = users)]
+pub struct UpdateUser {
+    fname: Option<String>,
+    lname: Option<String>,
+    mail: Option<String>,
+    phone: Option<Option<String>>,
 }
+

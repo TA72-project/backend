@@ -68,8 +68,10 @@ pub enum Role {
 pub struct Auth {
     exp: u64,
     iat: u64,
-    /// User's id, may reference `nurses` or `managers` table.
+    /// User's id, this references `nurses` or `managers` table depending on its role
     pub id: i64,
+    /// The real user ID, references `users` table
+    pub id_user: i64,
     pub id_center: i64,
     pub id_zone: Option<i64>,
     pub role: Role,
@@ -83,18 +85,20 @@ impl Auth {
         let now = Utc::now();
         let LoggedUser {
             role,
+            user,
             id_center,
             id_zone,
             ..
-        } = *user;
+        } = user;
 
         Self {
             exp: (now + Duration::hours(TOKEN_VALIDITY)).timestamp() as u64,
             iat: now.timestamp() as u64,
             id,
-            id_center,
-            id_zone,
-            role,
+            id_user: user.id,
+            id_center: *id_center,
+            id_zone: *id_zone,
+            role: *role,
         }
     }
 

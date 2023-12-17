@@ -87,4 +87,3 @@ pub struct UpdateUser {
     mail: Option<String>,
     phone: Option<Option<String>>,
 }
-

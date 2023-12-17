@@ -1,9 +1,9 @@
 use backend_derive::HasColumn;
-use diesel::{AsChangeset, Insertable, Queryable, Selectable};
+use diesel::{Insertable, Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
-use super::{Address, NewAddress, NewUser, User};
+use super::{Address, NewAddress, NewUser, UpdateAddress, UpdateUser, User};
 use crate::schema::patients;
 
 #[derive(Serialize, Queryable, Selectable, HasColumn, ToSchema)]
@@ -27,11 +27,11 @@ pub struct Patient {
     pub address: Address,
 }
 
-#[derive(Deserialize, AsChangeset, ToSchema)]
-#[diesel(table_name = patients)]
+#[derive(Deserialize, ToSchema)]
 pub struct UpdatePatient {
-    id_user: Option<i64>,
-    id_address: Option<i64>,
+    #[serde(flatten)]
+    pub user: UpdateUser,
+    pub address: UpdateAddress,
 }
 
 #[derive(Deserialize, Insertable, ToSchema)]

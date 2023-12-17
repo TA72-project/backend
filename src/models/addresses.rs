@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 use backend_derive::HasColumn;
-use diesel::{Identifiable, Insertable, Queryable, Selectable};
+use diesel::{prelude::AsChangeset, Identifiable, Insertable, Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
@@ -48,4 +48,17 @@ pub struct NewAddress {
     /// Address complement
     complement: Option<String>,
     id_zone: i64,
+}
+
+#[derive(Deserialize, AsChangeset, ToSchema)]
+#[diesel(table_name = addresses)]
+pub struct UpdateAddress {
+    /// Street number
+    number: Option<Option<i32>>,
+    street_name: Option<String>,
+    postcode: Option<String>,
+    city_name: Option<String>,
+    /// Address complement
+    complement: Option<Option<String>>,
+    id_zone: Option<i64>,
 }

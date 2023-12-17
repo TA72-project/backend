@@ -25,6 +25,7 @@ use crate::{
         Patient,
         PatientRecord,
         UpdatePatient,
+        UpdateAddress,
         NewPatientRecord,
         NewPatient,
         User,
@@ -158,15 +159,31 @@ async fn put(
     id: web::Path<i64>,
     update_record: Json<UpdatePatient>,
     pool: web::Data<DbPool>,
-    _: Auth,
+    auth: Auth,
 ) -> Result<impl Responder> {
-    web::block(move || {
-        diesel::update(patients::table)
-            .set(&update_record.0)
-            .filter(patients::id.eq(*id))
-            .execute(&mut pool.get().unwrap())
-    })
-    .await??;
+    let (id_center, id_user, id_address): (i64, i64, i64) = patients::table
+        .inner_join(addresses::table.inner_join(zones::table))
+        .filter(patients::id.eq(*id))
+        .select((zones::id_center, patients::id_user, patients::id_address))
+        .first(&mut pool.get()?)?;
+
+    if id_center != auth.id_center {
+        return Err(ErrorForbidden("").into());
+    }
+
+    pool.get()?.build_transaction().run(|conn| {
+        diesel::update(users::table)
+            .set(&update_record.user)
+            .filter(users::id.eq(id_user))
+            .execute(conn)?;
+
+        diesel::update(addresses::table)
+            .set(&update_record.address)
+            .filter(addresses::id.eq(id_address))
+            .execute(conn)?;
+
+        Ok::<(), diesel::result::Error>(())
+    })?;
 
     Ok(Json(()))
 }

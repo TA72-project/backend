@@ -24,7 +24,7 @@ use crate::{
 pub struct Doc;
 
 pub fn routes() -> Scope {
-    web::scope("/skills")
+    web::scope("/zones")
         .service(get)
         .service(post)
         .service(put)
